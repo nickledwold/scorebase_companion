@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference android:title="Panel"
+    android:summary="Select your panel"
+    android:key="panelNumber"
+    android:defaultValue="0"
+    android:entries="@array/panelListArray"
+    android:entryValues="@array/panelListValues" />
+    <ListPreference android:title="Discipline"
+        android:summary="Select your discipline"
+        android:key="discipline"
+        android:defaultValue="TRA"
+        android:entries="@array/disciplineListArray"
+        android:entryValues="@array/disciplineListValues" />
+<ListPreference android:title="Role"
+    android:summary="Select your role"
+    android:key="roleType"
+    android:defaultValue="E1"
+    android:entries="@array/rolesListArray"
+    android:entryValues="@array/rolesListValues" />
+    <EditTextPreference android:title="Server IP address"
+        android:summary="Enter IP address for the Panel Manager"
+        android:key="ipAddress"
+        android:defaultValue="192.168.1.0"/>
+    <ListPreference
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:defaultValue="Automatic"
+        android:entries="@array/ipAddressAssignModeListArray"
+        android:entryValues="@array/ipAddressAssignModeListValues"
+        android:key="ipAddressAssignMode"
+        android:summary="Select if IP Addresses get assigned automatically or manually"
+        android:title="IP Address Assignment Mode" />
+</PreferenceScreen>
+
