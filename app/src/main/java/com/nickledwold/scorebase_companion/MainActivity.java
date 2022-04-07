@@ -87,8 +87,8 @@ public class MainActivity extends AppCompatActivity {
     private long DOUBLE_CLICK_TIME_DELTA = 300;
     private Toast toast;
     private boolean inputAllowed = false;
+    private boolean confirmElements = false;
     private Handler connectionHandler;
-    private Handler countdownHandler;
 
 
     private long startTime = 5 * 60 * 1000; //5 minutes
@@ -277,6 +277,13 @@ public class MainActivity extends AppCompatActivity {
                                                     scoreText.setText("");
                                                     inputAllowed = false;
                                                     ShowCompetitorSummary(subMessageParts[1]);
+                                                }
+                                                if (subMessageParts[0].equals("ConfirmElements") && roleType.equals("CJP")) {
+                                                    scoreText.setText("");
+                                                    scoreTextText.setText("ELEMENTS");
+                                                    inputAllowed = true;
+                                                    confirmElements = true;
+                                                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Please confirm the number of elements for the exercise", Toast.LENGTH_SHORT);
                                                 }
                                             }
                                         }
@@ -516,7 +523,17 @@ public class MainActivity extends AppCompatActivity {
                 ShowCustomToast(R.layout.custom_toast_red,(ViewGroup)findViewById(R.id.custom_toast_layout_red),"Please enter a score before submitting", Toast.LENGTH_SHORT);
                 return;
             }
-            message = scoreText.getText().toString();
+            if(confirmElements){
+                int maxElements = discipline.equals("DMT") ? 2 : 10;
+                if(Integer.parseInt(scoreTextValue) > maxElements){
+                    ShowCustomToast(R.layout.custom_toast_red,(ViewGroup)findViewById(R.id.custom_toast_layout_red),"Value greater than maximum number of elements for " + discipline, Toast.LENGTH_SHORT);
+                    return;
+                }
+                confirmElements = false;
+                message = "ElementsConfirmed," + scoreText.getText().toString();
+            }else {
+                message = scoreText.getText().toString();
+            }
         }else {
 
                 int firstEmpty = find(deductionsArray, -1);
@@ -567,6 +584,7 @@ public class MainActivity extends AppCompatActivity {
         String buttonValue = b.getText().toString();
         if (interfaceType.equals("FullScore")){
             String scoreTextValue = scoreText.getText().toString();
+            if(confirmElements && buttonValue.equals(".")) return;
             if(scoreTextValue.equals("") && buttonValue.equals(".")) return;
             if(scoreTextValue.contains(".") && buttonValue.equals("."))return;
             float value = buttonValue == "." ? Float.parseFloat(scoreTextValue) : Float.parseFloat(scoreTextValue + buttonValue);
@@ -589,10 +607,12 @@ public class MainActivity extends AppCompatActivity {
             }
             String valueAfterDecimal = scoreTextValue.contains(".") ? scoreTextValue.substring(scoreTextValue.lastIndexOf('.') + 1) : null;
             switch(roleType){
-                case "HD" :
                 case "CJP":
                 case "D":
                     if(valueAfterDecimal != null && valueAfterDecimal.length() > 0) return;
+                    break;
+                case "HD" :
+                    if(valueAfterDecimal != null && valueAfterDecimal.length() > 1) return;
                     break;
                 case "S":
                 case "T":
@@ -630,7 +650,7 @@ public class MainActivity extends AppCompatActivity {
         //elements = 10;
         switch (interfaceType) {
             case "DMTDeduction":
-                if(elements == 1) maxMark = 7.0f;
+                if(elements == 1) maxMark = 9.0f;
                 break;
             case "TRADeduction":
                 maxMark = 1.0f * elements;
