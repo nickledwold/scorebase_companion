@@ -37,10 +37,15 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.lang.Object;
@@ -87,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
     private long DOUBLE_CLICK_TIME_DELTA = 300;
     private Toast toast;
     private boolean inputAllowed = false;
-    private boolean confirmElements = false;
     private Handler connectionHandler;
 
 
@@ -279,11 +283,8 @@ public class MainActivity extends AppCompatActivity {
                                                     ShowCompetitorSummary(subMessageParts[1]);
                                                 }
                                                 if (subMessageParts[0].equals("ConfirmElements") && roleType.equals("CJP")) {
-                                                    scoreText.setText("");
-                                                    scoreTextText.setText("ELEMENTS");
-                                                    inputAllowed = true;
-                                                    confirmElements = true;
-                                                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Please confirm the number of elements for the exercise", Toast.LENGTH_SHORT);
+                                                    PopUpClass popUpClass = new PopUpClass();
+                                                    popUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
                                                 }
                                             }
                                         }
@@ -523,19 +524,8 @@ public class MainActivity extends AppCompatActivity {
                 ShowCustomToast(R.layout.custom_toast_red,(ViewGroup)findViewById(R.id.custom_toast_layout_red),"Please enter a score before submitting", Toast.LENGTH_SHORT);
                 return;
             }
-            if(confirmElements){
-                int maxElements = discipline.equals("DMT") ? 2 : 10;
-                if(Integer.parseInt(scoreTextValue) > maxElements){
-                    ShowCustomToast(R.layout.custom_toast_red,(ViewGroup)findViewById(R.id.custom_toast_layout_red),"Value greater than maximum number of elements for " + discipline, Toast.LENGTH_SHORT);
-                    return;
-                }
-                confirmElements = false;
-                message = "ElementsConfirmed," + scoreText.getText().toString();
-            }else {
-                message = scoreText.getText().toString();
-            }
+            message = scoreText.getText().toString();
         }else {
-
                 int firstEmpty = find(deductionsArray, -1);
                 if (firstEmpty != -1) {
                     if((!fullExercise && firstEmpty != elements) || (fullExercise && firstEmpty != elements + 1)) {
@@ -544,7 +534,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 if(elements == 0)return;
-
             for (int i = 0; i < deductionsArray.length; i++) {
                     message += deductionsArray[i];
                     if (i != deductionsArray.length - 1) message += ",";
@@ -584,7 +573,6 @@ public class MainActivity extends AppCompatActivity {
         String buttonValue = b.getText().toString();
         if (interfaceType.equals("FullScore")){
             String scoreTextValue = scoreText.getText().toString();
-            if(confirmElements && buttonValue.equals(".")) return;
             if(scoreTextValue.equals("") && buttonValue.equals(".")) return;
             if(scoreTextValue.contains(".") && buttonValue.equals("."))return;
             float value = buttonValue == "." ? Float.parseFloat(scoreTextValue) : Float.parseFloat(scoreTextValue + buttonValue);
@@ -855,6 +843,76 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onTick(long millisUntilFinished){
+        }
+    }
+
+    public class PopUpClass{
+
+        TextView elementsTextView;
+        public void showPopupWindow(final View view){
+            //LayoutInflater inflater = (LayoutInflater)view.getContext().getSystemService(view.getContext().LAYOUT_INFLATER_SERVICE);
+            //View popupView = inflater.inflate(R.layout.pop_up_layout,null);
+            //boolean focusable = true;
+
+            LayoutInflater inflater = getLayoutInflater();
+            final View popupLayout = inflater.inflate(R.layout.pop_up_layout, (ViewGroup)findViewById(R.id.custom_pop_up_layout));
+            TextView tv = (TextView)popupLayout.findViewById(R.id.textTitle);
+            elementsTextView = (TextView)popupLayout.findViewById(R.id.elements);
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            int width = displayMetrics.widthPixels;
+            final PopupWindow popupWindow = new PopupWindow(popupLayout, width - 100,LinearLayout.LayoutParams.WRAP_CONTENT);
+            popupWindow.showAtLocation(view,Gravity.CENTER,0,0);
+            elementsTextView.setText(discipline.equals("DMT") ? "2" : "10");
+
+            /*final PopupWindow popupWindow = new PopupWindow(popupView, popupView.getWidth(), popupView.getHeight(),focusable);
+            popupWindow.showAtLocation(view,Gravity.CENTER,0,0);
+
+            /*TextView test2 = popupView.findViewById(R.id.textTitle);
+            test2.setText("Test12");*/
+
+            ImageButton upButton = popupLayout.findViewById(R.id.upButton);
+            upButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    Integer elements = Integer.parseInt(elementsTextView.getText().toString());
+                    if(elements == 10 && !discipline.equals("DMT")) return;
+                    if(elements == 2 && discipline.equals("DMT")) return;
+                    String newElements = String.valueOf(elements + 1);
+                    elementsTextView.setText(newElements);
+                }
+            });
+
+            ImageButton downButton = popupLayout.findViewById(R.id.downButton);
+            downButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    Integer elements = Integer.parseInt(elementsTextView.getText().toString());
+                    if(elements == 0) return;
+                    String newElements = String.valueOf(elements - 1);
+                    elementsTextView.setText(newElements);
+                }
+            });
+
+            Button submitButton = popupLayout.findViewById(R.id.submitButton);
+            submitButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    popupWindow.dismiss();
+                    mService.sendMessage("ElementsConfirmed," + elementsTextView.getText().toString());
+                }
+            });
+
+            /*popupLayout.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    popupWindow.dismiss();
+                    mService.sendMessage("ElementsConfirmed,10");
+                    return true;
+                }
+            });*/
         }
     }
 
