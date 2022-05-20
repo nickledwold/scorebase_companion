@@ -312,12 +312,8 @@ public class MainActivity extends AppCompatActivity {
     private void HideCompetitorSummary() {
         TextView eScoreTextView = findViewById(R.id.eScoreTextView);
         TextView eScoreTextView2 = findViewById(R.id.eScoreTextView2);
-        TextView dScoreTextView = findViewById(R.id.dScoreTextView);
-        TextView dScoreTextView2 = findViewById(R.id.dScoreTextView2);
         TextView pScoreTextView = findViewById(R.id.pScoreTextView);
         TextView pScoreTextView2 = findViewById(R.id.pScoreTextView2);
-        TextView totalScoreTextView = findViewById(R.id.totalScoreTextView);
-        TextView totalScoreTextView2 = findViewById(R.id.totalScoreTextView2);
         scoreTextText.setVisibility(View.VISIBLE);
         if(roleType.equals("CJP")) {
             scoreTextText.setText("PENALTY");
@@ -325,72 +321,26 @@ public class MainActivity extends AppCompatActivity {
             scoreTextText.setText("SCORE");
         }
         eScoreTextView.setVisibility(View.INVISIBLE);
-        dScoreTextView.setVisibility(View.INVISIBLE);
         pScoreTextView.setVisibility(View.INVISIBLE);
-        totalScoreTextView.setVisibility(View.INVISIBLE);
         eScoreTextView2.setVisibility(View.INVISIBLE);
-        dScoreTextView2.setVisibility(View.INVISIBLE);
         pScoreTextView2.setVisibility(View.INVISIBLE);
-        totalScoreTextView2.setVisibility(View.INVISIBLE);
         eScoreTextView2.setText("");
-        dScoreTextView2.setText("");
         pScoreTextView2.setText("");
-        totalScoreTextView2.setText("");
-        if(!discipline.equals("DMT")) {
-            TextView tScoreTextView = findViewById(R.id.tScoreTextView);
-            TextView tScoreTextView2 = findViewById(R.id.tScoreTextView2);
-            TextView hScoreTextView = findViewById(R.id.hScoreTextView);
-            TextView hScoreTextView2 = findViewById(R.id.hScoreTextView2);
-            hScoreTextView.setVisibility(View.INVISIBLE);
-            tScoreTextView.setVisibility(View.INVISIBLE);
-            hScoreTextView2.setVisibility(View.INVISIBLE);
-            tScoreTextView2.setVisibility(View.INVISIBLE);
-            hScoreTextView2.setText("");
-            tScoreTextView2.setText("");
-        }
     }
 
     private void ShowCompetitorSummary(String scores) {
         TextView eScoreTextView = findViewById(R.id.eScoreTextView);
         TextView eScoreTextView2 = findViewById(R.id.eScoreTextView2);
-        TextView dScoreTextView = findViewById(R.id.dScoreTextView);
-        TextView dScoreTextView2 = findViewById(R.id.dScoreTextView2);
         TextView pScoreTextView = findViewById(R.id.pScoreTextView);
         TextView pScoreTextView2 = findViewById(R.id.pScoreTextView2);
-        TextView totalScoreTextView = findViewById(R.id.totalScoreTextView);
-        TextView totalScoreTextView2 = findViewById(R.id.totalScoreTextView2);
         String[] scoreParts = scores.split(",");
         scoreTextText.setVisibility(View.INVISIBLE);
         eScoreTextView.setVisibility(View.VISIBLE);
-        dScoreTextView.setVisibility(View.VISIBLE);
         pScoreTextView.setVisibility(View.VISIBLE);
-        totalScoreTextView.setVisibility(View.VISIBLE);
         eScoreTextView2.setVisibility(View.VISIBLE);
-        dScoreTextView2.setVisibility(View.VISIBLE);
         pScoreTextView2.setVisibility(View.VISIBLE);
-        totalScoreTextView2.setVisibility(View.VISIBLE);
         eScoreTextView2.setText(ReplaceEmptyScore(scoreParts[0],2));
-        dScoreTextView2.setText(ReplaceEmptyScore(scoreParts[2],1));
         pScoreTextView2.setText(ReplaceEmptyScore(scoreParts[4],1));
-        totalScoreTextView2.setText(ReplaceEmptyScore(scoreParts[5],2));
-        if(!discipline.equals("DMT")) {
-            TextView hScoreTextView = findViewById(R.id.hScoreTextView);
-            TextView hScoreTextView2 = findViewById(R.id.hScoreTextView2);
-            TextView tScoreTextView = findViewById(R.id.tScoreTextView);
-            TextView tScoreTextView2 = findViewById(R.id.tScoreTextView2);
-            hScoreTextView.setVisibility(View.VISIBLE);
-            tScoreTextView.setVisibility(View.VISIBLE);
-            hScoreTextView2.setVisibility(View.VISIBLE);
-            tScoreTextView2.setVisibility(View.VISIBLE);
-            hScoreTextView2.setText(ReplaceEmptyScore(scoreParts[1],2));
-            tScoreTextView2.setText(ReplaceEmptyScore(scoreParts[3],2));
-            if(discipline.equals("TRS")){
-                tScoreTextView.setText("S");
-            }else{
-                tScoreTextView.setText("T");
-            };
-        }
-
     }
 
     private String ReplaceEmptyScore(String score, int decimals){
