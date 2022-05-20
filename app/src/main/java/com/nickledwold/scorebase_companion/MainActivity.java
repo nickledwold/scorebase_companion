@@ -230,6 +230,7 @@ public class MainActivity extends AppCompatActivity {
                                         @Override
                                         public void run() {
                                             onTouchEvent(null);
+                                            String judgeReEntry = null;
                                             String[] messageParts = finalMsg.split(";");
                                             for (String part : messageParts) {
                                                 String[] subMessageParts = part.split(":");
@@ -260,8 +261,16 @@ public class MainActivity extends AppCompatActivity {
                                                     fullExercise = discipline.equals("DMT") ? elements == 2 : elements == 10;
                                                     ReduceOpacityOfDeductionBoxes(elements);
                                                     inputAllowed = true;
-                                                    ToggleInput(true);
-                                                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Please enter your score", Toast.LENGTH_SHORT);
+                                                    if(elements > 0) {
+                                                        ToggleInput(true);
+                                                        ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Please enter your score", Toast.LENGTH_SHORT);
+                                                    }else{
+                                                        ToggleInput(false);
+                                                        ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Zero score", Toast.LENGTH_LONG);
+                                                    }
+                                                }
+                                                if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter")){
+                                                    judgeReEntry = subMessageParts[0];
                                                 }
                                                 if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter") && (subMessageParts[0].equals("P"+panelNumber+"|"+roleType) || subMessageParts[0].equals("P"+panelNumber+"|All") || (subMessageParts[0].equals("P"+panelNumber+"|E") && roleType.startsWith("E")))){
                                                     ClearScores();
@@ -270,11 +279,15 @@ public class MainActivity extends AppCompatActivity {
                                                     ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Please re-enter", Toast.LENGTH_LONG);
                                                 }
                                                 if (subMessageParts[0].equals("Elements")) {
-                                                    elements = Integer.parseInt(subMessageParts[1]);
-                                                    fullExercise = discipline.equals("DMT") ? elements == 2 : elements == 10;
-                                                    ReduceOpacityOfDeductionBoxes(elements);
-                                                    inputAllowed = true;
-                                                    ToggleInput(true);
+                                                    if(judgeReEntry != null && !judgeReEntry.equals("P"+panelNumber+"|"+roleType)) {
+                                                        //do nothing as it is a judge re-entry but not for this judge
+                                                    }else {
+                                                        elements = Integer.parseInt(subMessageParts[1]);
+                                                        fullExercise = discipline.equals("DMT") ? elements == 2 : elements == 10;
+                                                        ReduceOpacityOfDeductionBoxes(elements);
+                                                        inputAllowed = true;
+                                                        ToggleInput(true);
+                                                    }
                                                 }
                                                 if (subMessageParts[0].equals("FlightComplete")) {
                                                     ClearScores();
@@ -376,6 +389,7 @@ public class MainActivity extends AppCompatActivity {
             }
             deductionStabilityTextView.setText("");
         }
+        deductionsArray = getDeductions();
         scoreText.setText("");
     }
 
