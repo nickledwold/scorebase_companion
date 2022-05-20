@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -71,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView deductionTenTextView;
     private TextView deductionStabilityTextView;
     private TextView panelAndRoleTextView;
+    private Button submitButton;
     private TextView scoreText;
     private TextView scoreTextText;
     private String panelNumber;
@@ -160,9 +162,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }, 1000);
 
-
+        ToggleInput(false);
         countDownTimer = new MyCountDownTimer(startTime,interval);
-
     }
 
     private void ClearScoreAndScoreText() {
@@ -252,17 +253,20 @@ public class MainActivity extends AppCompatActivity {
                                                     HideCompetitorSummary();
                                                     ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : 10);
                                                     inputAllowed = false;
+                                                    ToggleInput(false);
                                                 }
                                                 if (subMessageParts[0].equals("ElementsConfirmed")) {
                                                     elements = Integer.parseInt(subMessageParts[1]);
                                                     fullExercise = discipline.equals("DMT") ? elements == 2 : elements == 10;
                                                     ReduceOpacityOfDeductionBoxes(elements);
                                                     inputAllowed = true;
+                                                    ToggleInput(true);
                                                     ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Please enter your score", Toast.LENGTH_SHORT);
                                                 }
                                                 if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter") && (subMessageParts[0].equals("P"+panelNumber+"|"+roleType) || subMessageParts[0].equals("P"+panelNumber+"|All") || (subMessageParts[0].equals("P"+panelNumber+"|E") && roleType.startsWith("E")))){
                                                     ClearScores();
                                                     inputAllowed = true;
+                                                    ToggleInput(true);
                                                     ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Please re-enter", Toast.LENGTH_LONG);
                                                 }
                                                 if (subMessageParts[0].equals("Elements")) {
@@ -270,16 +274,19 @@ public class MainActivity extends AppCompatActivity {
                                                     fullExercise = discipline.equals("DMT") ? elements == 2 : elements == 10;
                                                     ReduceOpacityOfDeductionBoxes(elements);
                                                     inputAllowed = true;
+                                                    ToggleInput(true);
                                                 }
                                                 if (subMessageParts[0].equals("FlightComplete")) {
                                                     ClearScores();
                                                     ClearCompetitorInfo();
                                                     inputAllowed = false;
+                                                    ToggleInput(false);
                                                     ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Flight complete", Toast.LENGTH_LONG);
                                                 }
                                                 if (subMessageParts[0].equals("CompetitorSummary")) {
                                                     scoreText.setText("");
                                                     inputAllowed = false;
+                                                    ToggleInput(false);
                                                     ShowCompetitorSummary(subMessageParts[1]);
                                                 }
                                                 if (subMessageParts[0].equals("ConfirmElements") && roleType.equals("CJP")) {
@@ -500,6 +507,7 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         updateSettings();
+        ToggleInput(false);
     }
 
     @Override
@@ -514,8 +522,15 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    public void submitButtonpressed(View view){
+    public void submitButtonpressed(View button){
         onTouchEvent(null);
+        String buttonText = ((Button)button).getText().toString();
+        if(buttonText.equals("RE-ENTER")){
+            ShowCustomToast(R.layout.custom_toast_amber,(ViewGroup)findViewById(R.id.custom_toast_layout_amber),"Re-entry requested\n\nPlease wait", Toast.LENGTH_SHORT);
+            mService.sendMessage("RequestReEntry");
+            submitButton.setEnabled(false);
+            submitButton.setTextColor(Color.GRAY);
+        }
         if(!inputAllowed) return;
         String message = "";
         if (interfaceType.equals("FullScore")){
@@ -546,11 +561,72 @@ public class MainActivity extends AppCompatActivity {
             mService.sendMessage(message);
             inputAllowed = false;
             ShowCustomToast(R.layout.custom_toast_green,(ViewGroup)findViewById(R.id.custom_toast_layout_green),"Submitted", Toast.LENGTH_SHORT);
+            ToggleInput(false);
+            submitButton = findViewById(R.id.submitButton);
+            submitButton.setBackground(getDrawable(R.drawable.reenter_button_background));
+            submitButton.setText("RE-ENTER");
+            submitButton.setEnabled(true);
+            submitButton.setTextColor(Color.WHITE);
         }
         catch (Exception err)
         {
             System.out.println("Sending the message failed." +  err.getMessage());
         }
+    }
+
+    private void ToggleInput(boolean enabled) {
+        int textColor = enabled ? Color.WHITE : Color.GRAY;
+        int imageAlpha = enabled ? 255 : 100;
+        scoreText.setTextColor(textColor);
+        if(!interfaceType.equals("FullScore")) {
+            deductionOneTextView.setTextColor(textColor);
+            deductionTwoTextView.setTextColor(textColor);
+            if (!discipline.equals("DMT")) {
+                deductionThreeTextView.setTextColor(textColor);
+                deductionFourTextView.setTextColor(textColor);
+                deductionFiveTextView.setTextColor(textColor);
+                deductionSixTextView.setTextColor(textColor);
+                deductionSevenTextView.setTextColor(textColor);
+                deductionEightTextView.setTextColor(textColor);
+                deductionNineTextView.setTextColor(textColor);
+                deductionTenTextView.setTextColor(textColor);
+            }
+            deductionStabilityTextView.setTextColor(textColor);
+        }
+        ((Button)findViewById(R.id.oneButton)).setTextColor(textColor);
+        ((Button)findViewById(R.id.twoButton)).setTextColor(textColor);
+        ((Button)findViewById(R.id.threeButton)).setTextColor(textColor);
+        ((Button)findViewById(R.id.fourButton)).setTextColor(textColor);
+        ((Button)findViewById(R.id.fiveButton)).setTextColor(textColor);
+        findViewById(R.id.oneButton).setEnabled(enabled);
+        findViewById(R.id.twoButton).setEnabled(enabled);
+        findViewById(R.id.threeButton).setEnabled(enabled);
+        findViewById(R.id.fourButton).setEnabled(enabled);
+        findViewById(R.id.fiveButton).setEnabled(enabled);
+        if (interfaceType.equals("FullScore")) {
+            ((Button)findViewById(R.id.sixButton)).setTextColor(textColor);
+            ((Button)findViewById(R.id.sevenButton)).setTextColor(textColor);
+            ((Button)findViewById(R.id.eightButton)).setTextColor(textColor);
+            ((Button)findViewById(R.id.nineButton)).setTextColor(textColor);
+            findViewById(R.id.sixButton).setEnabled(enabled);
+            findViewById(R.id.sevenButton).setEnabled(enabled);
+            findViewById(R.id.eightButton).setEnabled(enabled);
+            findViewById(R.id.nineButton).setEnabled(enabled);
+        } else {
+            ((Button)findViewById(R.id.tenButton)).setTextColor(textColor);
+            findViewById(R.id.tenButton).setEnabled(enabled);
+        }
+        ((Button)findViewById(R.id.zeroButton)).setTextColor(textColor);
+        ((Button)findViewById(R.id.decimalButton)).setTextColor(textColor);
+        ((ImageButton)findViewById(R.id.deleteButton)).setImageAlpha(imageAlpha);
+        findViewById(R.id.zeroButton).setEnabled(enabled);
+        findViewById(R.id.decimalButton).setEnabled(enabled);
+        findViewById(R.id.deleteButton).setEnabled(enabled);
+        submitButton = findViewById(R.id.submitButton);
+        submitButton.setBackground(getDrawable(R.drawable.submit_button_background));
+        submitButton.setEnabled(enabled);
+        submitButton.setTextColor(textColor);
+        submitButton.setText("SUBMIT");
     }
 
     private void ShowCustomToast(int resource, ViewGroup viewGroup, String toastText, int toastLength) {
@@ -634,6 +710,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void UpdateScore(int[] deductionsArray) {
+        int firstEmpty = find(deductionsArray, -1);
+        if (firstEmpty != -1) {
+            if((!fullExercise && firstEmpty != elements) || (fullExercise && firstEmpty != elements + 1)) {
+                scoreText.setText("");
+                return;
+            }
+        }
+
         float maxMark = 10.0f;
         //elements = 10;
         switch (interfaceType) {
@@ -850,9 +934,6 @@ public class MainActivity extends AppCompatActivity {
 
         TextView elementsTextView;
         public void showPopupWindow(final View view){
-            //LayoutInflater inflater = (LayoutInflater)view.getContext().getSystemService(view.getContext().LAYOUT_INFLATER_SERVICE);
-            //View popupView = inflater.inflate(R.layout.pop_up_layout,null);
-            //boolean focusable = true;
 
             LayoutInflater inflater = getLayoutInflater();
             final View popupLayout = inflater.inflate(R.layout.pop_up_layout, (ViewGroup)findViewById(R.id.custom_pop_up_layout));
@@ -864,12 +945,6 @@ public class MainActivity extends AppCompatActivity {
             final PopupWindow popupWindow = new PopupWindow(popupLayout, width - 100,LinearLayout.LayoutParams.WRAP_CONTENT);
             popupWindow.showAtLocation(view,Gravity.CENTER,0,0);
             elementsTextView.setText(discipline.equals("DMT") ? "2" : "10");
-
-            /*final PopupWindow popupWindow = new PopupWindow(popupView, popupView.getWidth(), popupView.getHeight(),focusable);
-            popupWindow.showAtLocation(view,Gravity.CENTER,0,0);
-
-            /*TextView test2 = popupView.findViewById(R.id.textTitle);
-            test2.setText("Test12");*/
 
             ImageButton upButton = popupLayout.findViewById(R.id.upButton);
             upButton.setOnClickListener(new View.OnClickListener() {
@@ -904,15 +979,6 @@ public class MainActivity extends AppCompatActivity {
                     mService.sendMessage("ElementsConfirmed," + elementsTextView.getText().toString());
                 }
             });
-
-            /*popupLayout.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    popupWindow.dismiss();
-                    mService.sendMessage("ElementsConfirmed,10");
-                    return true;
-                }
-            });*/
         }
     }
 
