@@ -81,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
     private String ipAddressAssignMode;
     private SharedPreferences SP;
     private static final String TAG = "MainActivity";
-    private Boolean deductions = false;
     private int[] deductionsArray;
     private String interfaceType = "TRADeduction";
     private final Context mContext = this;
@@ -250,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
                                                     nameTextView.setText(competitorInfo[0].replace("&comma",","));
                                                     clubTextView.setText(competitorInfo[1].replace("&comma",","));
                                                     otherInfoTextView.setText(competitorInfo[2]);
-                                                    ClearScores();
+                                                    ClearScores(true);
                                                     HideCompetitorSummary();
                                                     ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : 10);
                                                     inputAllowed = false;
@@ -273,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
                                                     judgeReEntry = subMessageParts[0];
                                                 }
                                                 if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter") && (subMessageParts[0].equals("P"+panelNumber+"|"+roleType) || subMessageParts[0].equals("P"+panelNumber+"|All") || (subMessageParts[0].equals("P"+panelNumber+"|E") && roleType.startsWith("E")))){
-                                                    ClearScores();
+                                                    ClearScores(true);
                                                     inputAllowed = true;
                                                     ToggleInput(true);
                                                     ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Please re-enter", Toast.LENGTH_LONG);
@@ -290,8 +289,8 @@ public class MainActivity extends AppCompatActivity {
                                                     }
                                                 }
                                                 if (subMessageParts[0].equals("FlightComplete")) {
-                                                    ClearScores();
-                                                    ClearCompetitorInfo();
+                                                    ClearScores(false);
+                                                    //ClearCompetitorInfo();
                                                     inputAllowed = false;
                                                     ToggleInput(false);
                                                     ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Flight complete", Toast.LENGTH_LONG);
@@ -323,37 +322,40 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void HideCompetitorSummary() {
-        TextView eScoreTextView = findViewById(R.id.eScoreTextView);
+        /*TextView eScoreTextView = findViewById(R.id.eScoreTextView);
         TextView eScoreTextView2 = findViewById(R.id.eScoreTextView2);
         TextView pScoreTextView = findViewById(R.id.pScoreTextView);
         TextView pScoreTextView2 = findViewById(R.id.pScoreTextView2);
-        scoreTextText.setVisibility(View.VISIBLE);
+        scoreTextText.setVisibility(View.VISIBLE);*/
         if(roleType.equals("CJP")) {
             scoreTextText.setText("PENALTY");
         } else {
             scoreTextText.setText("SCORE");
         }
-        eScoreTextView.setVisibility(View.INVISIBLE);
+        /*eScoreTextView.setVisibility(View.INVISIBLE);
         pScoreTextView.setVisibility(View.INVISIBLE);
         eScoreTextView2.setVisibility(View.INVISIBLE);
         pScoreTextView2.setVisibility(View.INVISIBLE);
         eScoreTextView2.setText("");
-        pScoreTextView2.setText("");
+        pScoreTextView2.setText("");*/
     }
 
     private void ShowCompetitorSummary(String scores) {
-        TextView eScoreTextView = findViewById(R.id.eScoreTextView);
+        /*TextView eScoreTextView = findViewById(R.id.eScoreTextView);
         TextView eScoreTextView2 = findViewById(R.id.eScoreTextView2);
         TextView pScoreTextView = findViewById(R.id.pScoreTextView);
-        TextView pScoreTextView2 = findViewById(R.id.pScoreTextView2);
+        TextView pScoreTextView2 = findViewById(R.id.pScoreTextView2);*/
         String[] scoreParts = scores.split(",");
-        scoreTextText.setVisibility(View.INVISIBLE);
-        eScoreTextView.setVisibility(View.VISIBLE);
+        scoreText.setText(ReplaceEmptyScore(scoreParts[0],2));
+        scoreText.setTextColor(Color.WHITE);
+        scoreTextText.setText("TOTAL EXECUTION SCORE");
+        //scoreTextText.setVisibility(View.INVISIBLE);
+        /*eScoreTextView.setVisibility(View.VISIBLE);
         pScoreTextView.setVisibility(View.VISIBLE);
         eScoreTextView2.setVisibility(View.VISIBLE);
         pScoreTextView2.setVisibility(View.VISIBLE);
         eScoreTextView2.setText(ReplaceEmptyScore(scoreParts[0],2));
-        pScoreTextView2.setText(ReplaceEmptyScore(scoreParts[4],1));
+        pScoreTextView2.setText(ReplaceEmptyScore(scoreParts[4],1));*/
     }
 
     private String ReplaceEmptyScore(String score, int decimals){
@@ -373,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
         otherInfoTextView.setText("");
     }
 
-    private void ClearScores() {
+    private void ClearScores(boolean clearScoreText) {
         if(!interfaceType.equals("FullScore")) {
             deductionOneTextView.setText("");
             deductionTwoTextView.setText("");
@@ -389,8 +391,12 @@ public class MainActivity extends AppCompatActivity {
             }
             deductionStabilityTextView.setText("");
         }
-        deductionsArray = getDeductions();
-        scoreText.setText("");
+        if(!interfaceType.equals("FullScore")) {
+            deductionsArray = getDeductions();
+        }
+        if(clearScoreText) {
+            scoreText.setText("");
+        }
     }
 
     private void ReduceOpacityOfDeductionBoxes(int elementsInExercise) {
@@ -471,7 +477,6 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         updateSettings();
-        ToggleInput(false);
     }
 
     @Override
@@ -842,6 +847,7 @@ public class MainActivity extends AppCompatActivity {
             scoreTextText.setText("SCORE");
         }
         ClearScoreAndScoreText();
+        ToggleInput(false);
     }
 
     public class MyCountDownTimer extends CountDownTimer {
