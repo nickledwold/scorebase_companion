@@ -322,40 +322,18 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void HideCompetitorSummary() {
-        /*TextView eScoreTextView = findViewById(R.id.eScoreTextView);
-        TextView eScoreTextView2 = findViewById(R.id.eScoreTextView2);
-        TextView pScoreTextView = findViewById(R.id.pScoreTextView);
-        TextView pScoreTextView2 = findViewById(R.id.pScoreTextView2);
-        scoreTextText.setVisibility(View.VISIBLE);*/
         if(roleType.equals("CJP")) {
             scoreTextText.setText("PENALTY");
         } else {
             scoreTextText.setText("SCORE");
         }
-        /*eScoreTextView.setVisibility(View.INVISIBLE);
-        pScoreTextView.setVisibility(View.INVISIBLE);
-        eScoreTextView2.setVisibility(View.INVISIBLE);
-        pScoreTextView2.setVisibility(View.INVISIBLE);
-        eScoreTextView2.setText("");
-        pScoreTextView2.setText("");*/
     }
 
     private void ShowCompetitorSummary(String scores) {
-        /*TextView eScoreTextView = findViewById(R.id.eScoreTextView);
-        TextView eScoreTextView2 = findViewById(R.id.eScoreTextView2);
-        TextView pScoreTextView = findViewById(R.id.pScoreTextView);
-        TextView pScoreTextView2 = findViewById(R.id.pScoreTextView2);*/
         String[] scoreParts = scores.split(",");
         scoreText.setText(ReplaceEmptyScore(scoreParts[0],2));
         scoreText.setTextColor(Color.WHITE);
         scoreTextText.setText("TOTAL EXECUTION SCORE");
-        //scoreTextText.setVisibility(View.INVISIBLE);
-        /*eScoreTextView.setVisibility(View.VISIBLE);
-        pScoreTextView.setVisibility(View.VISIBLE);
-        eScoreTextView2.setVisibility(View.VISIBLE);
-        pScoreTextView2.setVisibility(View.VISIBLE);
-        eScoreTextView2.setText(ReplaceEmptyScore(scoreParts[0],2));
-        pScoreTextView2.setText(ReplaceEmptyScore(scoreParts[4],1));*/
     }
 
     private String ReplaceEmptyScore(String score, int decimals){
@@ -397,6 +375,32 @@ public class MainActivity extends AppCompatActivity {
         if(clearScoreText) {
             scoreText.setText("");
         }
+    }
+
+    private void UpdateActiveDeductionBox(int[] deductionsArray) {
+        if(!inputAllowed) return;
+        if(interfaceType.equals("FullScore")) return;
+
+        List<ImageView> imageViews = new ArrayList<>();
+        imageViews.add((ImageView)findViewById(R.id.deuctionOnePanelImageView));
+        imageViews.add((ImageView)findViewById(R.id.deuctionTwoPanelImageView));
+        imageViews.add((ImageView)findViewById(R.id.deuctionStabilityPanelImageView));
+        if(interfaceType.equals("TRADeduction")){
+            imageViews.add(2,(ImageView)findViewById(R.id.deuctionThreePanelImageView));
+            imageViews.add(3,(ImageView)findViewById(R.id.deuctionFourPanelImageView));
+            imageViews.add(4,(ImageView)findViewById(R.id.deuctionFivePanelImageView));
+            imageViews.add(5,(ImageView)findViewById(R.id.deuctionSixPanelImageView));
+            imageViews.add(6,(ImageView)findViewById(R.id.deuctionSevenPanelImageView));
+            imageViews.add(7,(ImageView)findViewById(R.id.deuctionEightPanelImageView));
+            imageViews.add(8,(ImageView)findViewById(R.id.deuctionNinePanelImageView));
+            imageViews.add(9,(ImageView)findViewById(R.id.deuctionTenPanelImageView));
+        }
+        for (int i = 0; i < deductionsArray.length; i++) {
+            imageViews.get(i).setImageDrawable(getDrawable(R.drawable.bluepanel));
+        }
+        int firstEmpty = find(deductionsArray, -1);
+        if(firstEmpty == -1)return;
+        imageViews.get(firstEmpty).setImageDrawable(getDrawable(R.drawable.bluepanel_lighter));
     }
 
     private void ReduceOpacityOfDeductionBoxes(int elementsInExercise) {
@@ -459,6 +463,7 @@ public class MainActivity extends AppCompatActivity {
             deductionsArray[firstEmpty - 1] = -1;
             setDeductions(deductionsArray);
             UpdateScore(deductionsArray);
+            UpdateActiveDeductionBox(deductionsArray);
         }
     }
 
@@ -665,7 +670,14 @@ public class MainActivity extends AppCompatActivity {
             deductionsArray[firstEmpty] = tryParse(buttonValue);
             setDeductions(deductionsArray);
             UpdateScore(deductionsArray);
+            UpdateActiveDeductionBox(deductionsArray);
         }
+    }
+
+    public void deductionTextViewPressed(View view){
+        TextView tv = (TextView)view;
+        tv.setText("");
+        UpdateActiveDeductionBox(getDeductions());
     }
 
     public void scoreBasePressed(View view){
@@ -730,25 +742,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setDeductions(int[] deductionsArray) {
-        float alpha = deductionOneTextView.getAlpha();
-        if(deductionOneTextView.getAlpha() == 1.0){
-            String array0 = String.valueOf(deductionsArray[0]);
-            deductionOneTextView.setText(deductionsArray[0] == -1 ? "-" : array0);
-        }
-        //if(deductionOneTextView.getAlpha() == 1.0) deductionOneTextView.setText(deductionsArray[0] == -1 ? "-" : String.valueOf(deductionsArray[0]));
-        if(deductionTwoTextView.getAlpha() == 1.0)deductionTwoTextView.setText(deductionsArray[1] == -1 ? "-" : String.valueOf(deductionsArray[1]));
+        if(deductionOneTextView.getAlpha() == 1.0)deductionOneTextView.setText(deductionsArray[0] == -1 ? "" : String.valueOf(deductionsArray[0]));
+        if(deductionTwoTextView.getAlpha() == 1.0)deductionTwoTextView.setText(deductionsArray[1] == -1 ? "" : String.valueOf(deductionsArray[1]));
         if (!discipline.equals("DMT")) {
-            if(deductionThreeTextView.getAlpha() == 1.0) deductionThreeTextView.setText(deductionsArray[2] == -1 ? "-" : String.valueOf(deductionsArray[2]));
-            if(deductionFourTextView.getAlpha() == 1.0) deductionFourTextView.setText(deductionsArray[3] == -1 ? "-" : String.valueOf(deductionsArray[3]));
-            if(deductionFiveTextView.getAlpha() == 1.0) deductionFiveTextView.setText(deductionsArray[4] == -1 ? "-" : String.valueOf(deductionsArray[4]));
-            if(deductionSixTextView.getAlpha() == 1.0) deductionSixTextView.setText(deductionsArray[5] == -1 ? "-" : String.valueOf(deductionsArray[5]));
-            if(deductionSevenTextView.getAlpha() == 1.0) deductionSevenTextView.setText(deductionsArray[6] == -1 ? "-" : String.valueOf(deductionsArray[6]));
-            if(deductionEightTextView.getAlpha() == 1.0) deductionEightTextView.setText(deductionsArray[7] == -1 ? "-" : String.valueOf(deductionsArray[7]));
-            if(deductionNineTextView.getAlpha() == 1.0) deductionNineTextView.setText(deductionsArray[8] == -1 ? "-" : String.valueOf(deductionsArray[8]));
-            if(deductionTenTextView.getAlpha() == 1.0) deductionTenTextView.setText(deductionsArray[9] == -1 ? "-" : String.valueOf(deductionsArray[9]));
+            if(deductionThreeTextView.getAlpha() == 1.0) deductionThreeTextView.setText(deductionsArray[2] == -1 ? "" : String.valueOf(deductionsArray[2]));
+            if(deductionFourTextView.getAlpha() == 1.0) deductionFourTextView.setText(deductionsArray[3] == -1 ? "" : String.valueOf(deductionsArray[3]));
+            if(deductionFiveTextView.getAlpha() == 1.0) deductionFiveTextView.setText(deductionsArray[4] == -1 ? "" : String.valueOf(deductionsArray[4]));
+            if(deductionSixTextView.getAlpha() == 1.0) deductionSixTextView.setText(deductionsArray[5] == -1 ? "" : String.valueOf(deductionsArray[5]));
+            if(deductionSevenTextView.getAlpha() == 1.0) deductionSevenTextView.setText(deductionsArray[6] == -1 ? "" : String.valueOf(deductionsArray[6]));
+            if(deductionEightTextView.getAlpha() == 1.0) deductionEightTextView.setText(deductionsArray[7] == -1 ? "" : String.valueOf(deductionsArray[7]));
+            if(deductionNineTextView.getAlpha() == 1.0) deductionNineTextView.setText(deductionsArray[8] == -1 ? "" : String.valueOf(deductionsArray[8]));
+            if(deductionTenTextView.getAlpha() == 1.0) deductionTenTextView.setText(deductionsArray[9] == -1 ? "" : String.valueOf(deductionsArray[9]));
         }
         int deductionsArrayCount = deductionsArray.length;
-        if(deductionStabilityTextView.getAlpha() == 1.0) deductionStabilityTextView.setText(deductionsArray[deductionsArrayCount-1] == -1 ? "-" : String.valueOf(deductionsArray[deductionsArrayCount-1]));
+        if(deductionStabilityTextView.getAlpha() == 1.0) deductionStabilityTextView.setText(deductionsArray[deductionsArrayCount-1] == -1 ? "" : String.valueOf(deductionsArray[deductionsArrayCount-1]));
     }
 
     private float CalculateDeduction(int[] deductionsArray){
