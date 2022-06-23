@@ -1,13 +1,11 @@
 package com.nickledwold.scorebase_companion;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.res.TypedArrayUtils;
 import microsoft.aspnet.signalr.client.ConnectionState;
 import microsoft.aspnet.signalr.client.hubs.SubscriptionHandler2;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.Context;
@@ -17,14 +15,11 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.text.Layout;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -32,34 +27,24 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
-import java.lang.Object;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
     private TextView deductionOneTextView;
     private TextView nameTextView;
     private TextView clubTextView;
+    private TextView categoryTextView;
     private TextView otherInfoTextView;
     private TextView deductionTwoTextView;
     private TextView deductionThreeTextView;
@@ -72,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView deductionTenTextView;
     private TextView deductionStabilityTextView;
     private TextView panelAndRoleTextView;
+    private TextView judgeNameTextView;
     private Button submitButton;
     private TextView scoreText;
     private TextView scoreTextText;
@@ -224,7 +210,11 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     System.out.print(finalMsg);
-                                    if(!(finalMsg.startsWith("CompetitorInfo:")||finalMsg.startsWith("FlightComplete"))) return;
+                                    if(finalMsg.equals("ping")){
+                                        onTouchEvent(null);
+                                        Toast.makeText(getApplicationContext(), "Connected", Toast.LENGTH_LONG).show();
+                                    }
+                                    if(!(finalMsg.startsWith("CompetitorInfo:")||finalMsg.startsWith("FlightComplete")||finalMsg.startsWith("JudgeInfo:"))) return;
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
@@ -244,20 +234,22 @@ public class MainActivity extends AppCompatActivity {
                                                     String[] competitorInfo = subMessageParts[1].split(",");
                                                     nameTextView = findViewById(R.id.nameTextView);
                                                     clubTextView = findViewById(R.id.clubTextView);
+                                                    categoryTextView = findViewById(R.id.categoryTextView);
                                                     otherInfoTextView = findViewById(R.id.otherInfoTextView);
                                                     scoreTextText.setVisibility(View.VISIBLE);
                                                     nameTextView.setText(competitorInfo[0].replace("&comma",","));
                                                     clubTextView.setText(competitorInfo[1].replace("&comma",","));
-                                                    otherInfoTextView.setText(competitorInfo[2]);
+                                                    categoryTextView.setText(competitorInfo[2].replace("&comma",","));
+                                                    otherInfoTextView.setText(competitorInfo[3]);
                                                     ClearScores(true);
                                                     HideCompetitorSummary();
-                                                    ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : 10);
+                                                    ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
                                                     inputAllowed = false;
                                                     ToggleInput(false);
                                                 }
                                                 if (subMessageParts[0].equals("ElementsConfirmed")) {
                                                     elements = Integer.parseInt(subMessageParts[1]);
-                                                    fullExercise = discipline.equals("DMT") ? elements == 2 : elements == 10;
+                                                    fullExercise = discipline.equals("DMT") ? elements == 2 : discipline.equals("TUM") ? elements == 8 : elements == 10;
                                                     ReduceOpacityOfDeductionBoxes(elements);
                                                     inputAllowed = true;
                                                     if(elements > 0) {
@@ -282,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
                                                         //do nothing as it is a judge re-entry but not for this judge
                                                     }else {
                                                         elements = Integer.parseInt(subMessageParts[1]);
-                                                        fullExercise = discipline.equals("DMT") ? elements == 2 : elements == 10;
+                                                        fullExercise = discipline.equals("DMT") ? elements == 2 : discipline.equals("TUM") ? elements == 8 : elements == 10;
                                                         ReduceOpacityOfDeductionBoxes(elements);
                                                         inputAllowed = true;
                                                         ToggleInput(true);
@@ -304,6 +296,19 @@ public class MainActivity extends AppCompatActivity {
                                                 if (subMessageParts[0].equals("ConfirmElements") && roleType.equals("CJP")) {
                                                     PopUpClass popUpClass = new PopUpClass();
                                                     popUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
+                                                }
+                                                if (subMessageParts[0].equals("JudgeInfo")) {
+                                                    String[] judges = subMessageParts[1].split("\\|");
+                                                    for (String judge : judges) {
+                                                        if(judge.startsWith(roleType)){
+                                                            String[] judgeRoleAndName = judge.split(",");
+                                                            judgeNameTextView = findViewById(R.id.judgeNameTextView);
+                                                            judgeNameTextView.setText(judgeRoleAndName[1]);
+                                                            SharedPreferences.Editor editor = SP.edit();
+                                                            editor.putString("judgeName", judgeRoleAndName[1]);
+                                                            editor.commit();
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -385,15 +390,17 @@ public class MainActivity extends AppCompatActivity {
         imageViews.add((ImageView)findViewById(R.id.deuctionOnePanelImageView));
         imageViews.add((ImageView)findViewById(R.id.deuctionTwoPanelImageView));
         imageViews.add((ImageView)findViewById(R.id.deuctionStabilityPanelImageView));
-        if(interfaceType.equals("TRADeduction")){
+        if(interfaceType.equals("TRADeduction") || interfaceType.equals("TUMDeduction")){
             imageViews.add(2,(ImageView)findViewById(R.id.deuctionThreePanelImageView));
             imageViews.add(3,(ImageView)findViewById(R.id.deuctionFourPanelImageView));
             imageViews.add(4,(ImageView)findViewById(R.id.deuctionFivePanelImageView));
             imageViews.add(5,(ImageView)findViewById(R.id.deuctionSixPanelImageView));
             imageViews.add(6,(ImageView)findViewById(R.id.deuctionSevenPanelImageView));
             imageViews.add(7,(ImageView)findViewById(R.id.deuctionEightPanelImageView));
-            imageViews.add(8,(ImageView)findViewById(R.id.deuctionNinePanelImageView));
-            imageViews.add(9,(ImageView)findViewById(R.id.deuctionTenPanelImageView));
+            if(interfaceType.equals("TRADeduction")) {
+                imageViews.add(8, (ImageView) findViewById(R.id.deuctionNinePanelImageView));
+                imageViews.add(9, (ImageView) findViewById(R.id.deuctionTenPanelImageView));
+            }
         }
         for (int i = 0; i < deductionsArray.length; i++) {
             imageViews.get(i).setImageDrawable(getDrawable(R.drawable.bluepanel));
@@ -406,6 +413,7 @@ public class MainActivity extends AppCompatActivity {
     private void ReduceOpacityOfDeductionBoxes(int elementsInExercise) {
         if(interfaceType.equals("FullScore")) return;
         if(interfaceType.equals("DMTDeduction") && elementsInExercise > 1) elementsInExercise = 3;
+        if(interfaceType.equals("TUMDeduction") && elementsInExercise > 7) elementsInExercise = 9;
         if(interfaceType.equals("TRADeduction") && elementsInExercise > 9) elementsInExercise = 11;
 
         List<ImageView> imageViews = new ArrayList<>();
@@ -417,24 +425,26 @@ public class MainActivity extends AppCompatActivity {
         textViews.add((TextView)findViewById(R.id.deductionTwoTextView));
         textViews.add((TextView)findViewById(R.id.deductionStabilityTextView));
 
-        if(interfaceType.equals("TRADeduction")){
+        if(interfaceType.equals("TRADeduction") || interfaceType.equals("TUMDeduction")){
             imageViews.add(2,(ImageView)findViewById(R.id.deuctionThreePanelImageView));
             imageViews.add(3,(ImageView)findViewById(R.id.deuctionFourPanelImageView));
             imageViews.add(4,(ImageView)findViewById(R.id.deuctionFivePanelImageView));
             imageViews.add(5,(ImageView)findViewById(R.id.deuctionSixPanelImageView));
             imageViews.add(6,(ImageView)findViewById(R.id.deuctionSevenPanelImageView));
             imageViews.add(7,(ImageView)findViewById(R.id.deuctionEightPanelImageView));
-            imageViews.add(8,(ImageView)findViewById(R.id.deuctionNinePanelImageView));
-            imageViews.add(9,(ImageView)findViewById(R.id.deuctionTenPanelImageView));
-
             textViews.add(2,(TextView)findViewById(R.id.deductionThreeTextView));
             textViews.add(3,(TextView)findViewById(R.id.deductionFourTextView));
             textViews.add(4,(TextView)findViewById(R.id.deductionFiveTextView));
             textViews.add(5,(TextView)findViewById(R.id.deductionSixTextView));
             textViews.add(6,(TextView)findViewById(R.id.deductionSevenTextView));
             textViews.add(7,(TextView)findViewById(R.id.deductionEightTextView));
-            textViews.add(8,(TextView)findViewById(R.id.deductionNineTextView));
-            textViews.add(9,(TextView)findViewById(R.id.deductionTenTextView));
+
+            if(interfaceType.equals("TRADeduction")) {
+                imageViews.add(8, (ImageView) findViewById(R.id.deuctionNinePanelImageView));
+                imageViews.add(9, (ImageView) findViewById(R.id.deuctionTenPanelImageView));
+                textViews.add(8, (TextView) findViewById(R.id.deductionNineTextView));
+                textViews.add(9, (TextView) findViewById(R.id.deductionTenTextView));
+            }
         }
         for (int i = 0; i < elementsInExercise; i++) {
             imageViews.get(i).setAlpha(1.0f);
@@ -562,8 +572,10 @@ public class MainActivity extends AppCompatActivity {
                 deductionSixTextView.setTextColor(textColor);
                 deductionSevenTextView.setTextColor(textColor);
                 deductionEightTextView.setTextColor(textColor);
-                deductionNineTextView.setTextColor(textColor);
-                deductionTenTextView.setTextColor(textColor);
+                if(!discipline.equals("TUM")) {
+                    deductionNineTextView.setTextColor(textColor);
+                    deductionTenTextView.setTextColor(textColor);
+                }
             }
             deductionStabilityTextView.setTextColor(textColor);
         }
@@ -675,9 +687,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void deductionTextViewPressed(View view){
+        if(!inputAllowed) return;
         TextView tv = (TextView)view;
         tv.setText("");
         UpdateActiveDeductionBox(getDeductions());
+        UpdateScore(getDeductions());
     }
 
     public void scoreBasePressed(View view){
@@ -703,7 +717,10 @@ public class MainActivity extends AppCompatActivity {
         //elements = 10;
         switch (interfaceType) {
             case "DMTDeduction":
-                if(elements == 1) maxMark = 9.0f;
+                maxMark = elements == 0 ? 0.0f : elements + 8.0f;
+                break;
+            case "TUMDeduction":
+                maxMark = elements == 0 ? 0.0f : elements + 2.0f;
                 break;
             case "TRADeduction":
                 maxMark = 1.0f * elements;
@@ -722,6 +739,18 @@ public class MainActivity extends AppCompatActivity {
                     tryParse(deductionTwoTextView.getText().toString()),
                     tryParse(deductionStabilityTextView.getText().toString())
             };
+        }else if (discipline.equals("TUM")) {
+            deductionsArray = new int[]{
+                    tryParse(deductionOneTextView.getText().toString()),
+                    tryParse(deductionTwoTextView.getText().toString()),
+                    tryParse(deductionThreeTextView.getText().toString()),
+                    tryParse(deductionFourTextView.getText().toString()),
+                    tryParse(deductionFiveTextView.getText().toString()),
+                    tryParse(deductionSixTextView.getText().toString()),
+                    tryParse(deductionSevenTextView.getText().toString()),
+                    tryParse(deductionEightTextView.getText().toString()),
+                    tryParse(deductionStabilityTextView.getText().toString())
+            };
         }else {
             deductionsArray = new int[]{
                     tryParse(deductionOneTextView.getText().toString()),
@@ -738,7 +767,6 @@ public class MainActivity extends AppCompatActivity {
             };
         }
         return deductionsArray;
-
     }
 
     private void setDeductions(int[] deductionsArray) {
@@ -751,8 +779,10 @@ public class MainActivity extends AppCompatActivity {
             if(deductionSixTextView.getAlpha() == 1.0) deductionSixTextView.setText(deductionsArray[5] == -1 ? "" : String.valueOf(deductionsArray[5]));
             if(deductionSevenTextView.getAlpha() == 1.0) deductionSevenTextView.setText(deductionsArray[6] == -1 ? "" : String.valueOf(deductionsArray[6]));
             if(deductionEightTextView.getAlpha() == 1.0) deductionEightTextView.setText(deductionsArray[7] == -1 ? "" : String.valueOf(deductionsArray[7]));
-            if(deductionNineTextView.getAlpha() == 1.0) deductionNineTextView.setText(deductionsArray[8] == -1 ? "" : String.valueOf(deductionsArray[8]));
-            if(deductionTenTextView.getAlpha() == 1.0) deductionTenTextView.setText(deductionsArray[9] == -1 ? "" : String.valueOf(deductionsArray[9]));
+            if (!discipline.equals("TUM")) {
+                if (deductionNineTextView.getAlpha() == 1.0) deductionNineTextView.setText(deductionsArray[8] == -1 ? "" : String.valueOf(deductionsArray[8]));
+                if (deductionTenTextView.getAlpha() == 1.0) deductionTenTextView.setText(deductionsArray[9] == -1 ? "" : String.valueOf(deductionsArray[9]));
+            }
         }
         int deductionsArrayCount = deductionsArray.length;
         if(deductionStabilityTextView.getAlpha() == 1.0) deductionStabilityTextView.setText(deductionsArray[deductionsArrayCount-1] == -1 ? "" : String.valueOf(deductionsArray[deductionsArrayCount-1]));
@@ -829,9 +859,12 @@ public class MainActivity extends AppCompatActivity {
         }else if (discipline.equals("DMT")) {
             interfaceType = "DMTDeduction";
             setContentView(R.layout.activity_main_dmt);
+        }else if (discipline.equals("TUM")) {
+            interfaceType = "TUMDeduction";
+            setContentView(R.layout.activity_main_tum);
         }else{
             interfaceType = "TRADeduction";
-            setContentView(R.layout.activity_main);
+            setContentView(R.layout.activity_main_tra);
         }
         deductionOneTextView = findViewById(R.id.deductionOneTextView);
         deductionTwoTextView = findViewById(R.id.deductionTwoTextView);
@@ -845,9 +878,11 @@ public class MainActivity extends AppCompatActivity {
         deductionTenTextView = findViewById(R.id.deductionTenTextView);
         deductionStabilityTextView = findViewById(R.id.deductionStabilityTextView);
         panelAndRoleTextView = findViewById(R.id.panelAndRoleTextView);
+        judgeNameTextView = findViewById(R.id.judgeNameTextView);
         scoreText = (TextView) findViewById(R.id.scoreTextView);
         scoreTextText = (TextView) findViewById(R.id.scoreTextTextView);
         panelAndRoleTextView.setText("P" + panelNumber + " | " + roleType);
+        judgeNameTextView.setText(SP.getString("judgeName","SURNAME FirstName"));
         if(roleType.equals("CJP")) {
             scoreTextText.setText("PENALTY");
         } else {
@@ -921,16 +956,16 @@ public class MainActivity extends AppCompatActivity {
             int width = displayMetrics.widthPixels;
             final PopupWindow popupWindow = new PopupWindow(popupLayout, width - 100,LinearLayout.LayoutParams.WRAP_CONTENT);
             popupWindow.showAtLocation(view,Gravity.CENTER,0,0);
-            elementsTextView.setText(discipline.equals("DMT") ? "2" : "10");
+            elementsTextView.setText(discipline.equals("DMT") ? "2" : discipline.equals("TUM") ? "8" : "10");
 
             ImageButton upButton = popupLayout.findViewById(R.id.upButton);
             upButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
                     Integer elements = Integer.parseInt(elementsTextView.getText().toString());
-                    if(elements == 10 && !discipline.equals("DMT")) return;
                     if(elements == 2 && discipline.equals("DMT")) return;
+                    if(elements == 8 && discipline.equals("TUM")) return;
+                    if(elements == 10) return;
                     String newElements = String.valueOf(elements + 1);
                     elementsTextView.setText(newElements);
                 }
