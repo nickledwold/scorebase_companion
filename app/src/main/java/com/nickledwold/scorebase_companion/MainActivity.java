@@ -362,15 +362,17 @@ public class MainActivity extends AppCompatActivity {
         if(!interfaceType.equals("FullScore")) {
             deductionOneTextView.setText("");
             deductionTwoTextView.setText("");
-            if(interfaceType.equals("TRADeduction")) {
+            if(interfaceType.equals("TRADeduction") || interfaceType.equals("TUMDeduction")) {
                 deductionThreeTextView.setText("");
                 deductionFourTextView.setText("");
                 deductionFiveTextView.setText("");
                 deductionSixTextView.setText("");
                 deductionSevenTextView.setText("");
                 deductionEightTextView.setText("");
-                deductionNineTextView.setText("");
-                deductionTenTextView.setText("");
+                if(interfaceType.equals("TRADeduction")) {
+                    deductionNineTextView.setText("");
+                    deductionTenTextView.setText("");
+                }
             }
             deductionStabilityTextView.setText("");
         }
