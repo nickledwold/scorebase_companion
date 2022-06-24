@@ -960,28 +960,113 @@ public class MainActivity extends AppCompatActivity {
             popupWindow.showAtLocation(view,Gravity.CENTER,0,0);
             elementsTextView.setText(discipline.equals("DMT") ? "2" : discipline.equals("TUM") ? "8" : "10");
 
-            ImageButton upButton = popupLayout.findViewById(R.id.upButton);
-            upButton.setOnClickListener(new View.OnClickListener() {
+            final Button zeroButton = popupLayout.findViewById(R.id.zeroButton2);
+            zeroButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Integer elements = Integer.parseInt(elementsTextView.getText().toString());
-                    if(elements == 2 && discipline.equals("DMT")) return;
-                    if(elements == 8 && discipline.equals("TUM")) return;
-                    if(elements == 10) return;
-                    String newElements = String.valueOf(elements + 1);
-                    elementsTextView.setText(newElements);
+                    elementsTextView.setText(zeroButton.getText());
                 }
             });
-
-            ImageButton downButton = popupLayout.findViewById(R.id.downButton);
-            downButton.setOnClickListener(new View.OnClickListener() {
+            final Button oneButton = popupLayout.findViewById(R.id.oneButton2);
+            oneButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    Integer elements = Integer.parseInt(elementsTextView.getText().toString());
-                    if(elements == 0) return;
-                    String newElements = String.valueOf(elements - 1);
-                    elementsTextView.setText(newElements);
+                    elementsTextView.setText(oneButton.getText());
+                }
+            });
+            final Button twoButton = popupLayout.findViewById(R.id.twoButton2);
+            twoButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(twoButton.getText());
+                }
+            });
+            final Button threeButton = popupLayout.findViewById(R.id.threeButton2);
+            if(discipline.equals("DMT")) {
+                threeButton.setEnabled(false);
+                threeButton.setTextColor(Color.GRAY);
+            }
+            threeButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(threeButton.getText());
+                }
+            });
+            final Button fourButton = popupLayout.findViewById(R.id.fourButton2);
+            if(discipline.equals("DMT")) {
+                fourButton.setEnabled(false);
+                fourButton.setTextColor(Color.GRAY);
+            }
+            fourButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(fourButton.getText());
+                }
+            });
+            final Button fiveButton = popupLayout.findViewById(R.id.fiveButton2);
+            if(discipline.equals("DMT")) {
+                fiveButton.setEnabled(false);
+                fiveButton.setTextColor(Color.GRAY);
+            }
+            fiveButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(fiveButton.getText());
+                }
+            });
+            final Button sixButton = popupLayout.findViewById(R.id.sixButton2);
+            if(discipline.equals("DMT")) {
+                sixButton.setEnabled(false);
+                sixButton.setTextColor(Color.GRAY);
+            }
+            sixButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(sixButton.getText());
+                }
+            });
+            final Button sevenButton = popupLayout.findViewById(R.id.sevenButton2);
+            if(discipline.equals("DMT")) {
+                sevenButton.setEnabled(false);
+                sevenButton.setTextColor(Color.GRAY);
+            }
+            sevenButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(sevenButton.getText());
+                }
+            });
+            final Button eightButton = popupLayout.findViewById(R.id.eightButton2);
+            if(discipline.equals("DMT")) {
+                eightButton.setEnabled(false);
+                eightButton.setTextColor(Color.GRAY);
+            }
+            eightButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(eightButton.getText());
+                }
+            });
+            final Button nineButton = popupLayout.findViewById(R.id.nineButton2);
+            if(discipline.equals("DMT") || discipline.equals("TUM")) {
+                nineButton.setEnabled(false);
+                nineButton.setTextColor(Color.GRAY);
+            }
+            nineButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(nineButton.getText());
+                }
+            });
+            final Button tenButton = popupLayout.findViewById(R.id.tenButton2);
+            if(discipline.equals("DMT") || discipline.equals("TUM")) {
+                tenButton.setEnabled(false);
+                tenButton.setTextColor(Color.GRAY);
+            }
+            tenButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementsTextView.setText(tenButton.getText());
                 }
             });
 
