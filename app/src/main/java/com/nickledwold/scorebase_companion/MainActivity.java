@@ -409,6 +409,7 @@ public class MainActivity extends AppCompatActivity {
         }
         int firstEmpty = find(deductionsArray, -1);
         if(firstEmpty == -1)return;
+        if(!fullExercise && firstEmpty >= elements) return;
         imageViews.get(firstEmpty).setImageDrawable(getDrawable(R.drawable.bluepanel_lighter));
     }
 
