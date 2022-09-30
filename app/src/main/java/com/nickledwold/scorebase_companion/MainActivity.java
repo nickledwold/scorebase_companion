@@ -214,6 +214,22 @@ public class MainActivity extends AppCompatActivity {
                                         onTouchEvent(null);
                                         Toast.makeText(getApplicationContext(), "Connected", Toast.LENGTH_LONG).show();
                                     }
+                                    if(finalMsg.equals("reset")){
+                                        nameTextView = findViewById(R.id.nameTextView);
+                                        clubTextView = findViewById(R.id.clubTextView);
+                                        categoryTextView = findViewById(R.id.categoryTextView);
+                                        otherInfoTextView = findViewById(R.id.otherInfoTextView);
+                                        scoreTextText.setVisibility(View.VISIBLE);
+                                        nameTextView.setText("");
+                                        clubTextView.setText("");
+                                        categoryTextView.setText("");
+                                        otherInfoTextView.setText("");
+                                        ClearScores(true);
+                                        HideCompetitorSummary();
+                                        ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
+                                        inputAllowed = false;
+                                        ToggleInput(false);
+                                    }
                                     if(!(finalMsg.startsWith("CompetitorInfo:")||finalMsg.startsWith("FlightComplete")||finalMsg.startsWith("JudgeInfo:"))) return;
                                     runOnUiThread(new Runnable() {
                                         @Override
@@ -270,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
                                                     ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Please re-enter", Toast.LENGTH_LONG);
                                                 }
                                                 if (subMessageParts[0].equals("Elements")) {
-                                                    if(judgeReEntry != null && !judgeReEntry.equals("P"+panelNumber+"|"+roleType)) {
+                                                    if(judgeReEntry != null && (!judgeReEntry.equals("P"+panelNumber+"|"+roleType) && !judgeReEntry.equals("P"+panelNumber+"|All"))) {
                                                         //do nothing as it is a judge re-entry but not for this judge
                                                     }else {
                                                         elements = Integer.parseInt(subMessageParts[1]);
