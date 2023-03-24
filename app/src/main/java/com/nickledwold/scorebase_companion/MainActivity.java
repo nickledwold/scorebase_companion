@@ -1,8 +1,5 @@
 package com.nickledwold.scorebase_companion;
 import androidx.appcompat.app.AppCompatActivity;
-import microsoft.aspnet.signalr.client.ConnectionState;
-import microsoft.aspnet.signalr.client.hubs.SubscriptionHandler2;
-
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
@@ -34,6 +31,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.microsoft.signalr.HubConnectionState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView scoreTextText;
     private String panelNumber;
     private String roleType;
+    private String interimRoleType;
+    private String interimScore;
     private String discipline;
     private String ipAddressAssignMode;
     private SharedPreferences SP;
@@ -131,8 +131,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if(mService != null) {
-                    if (mService.mHubConnection.getState() == ConnectionState.Connected) {
+                    if (mService.mHubConnection.getConnectionState() == HubConnectionState.CONNECTED) {
                         System.out.println("Connected");
+                        mService.mHubConnection.send("SetUserName", "P" + panelNumber + "|" + roleType);
                     } else {
                         System.out.println("Disconnected");
                         if (mBound) {
@@ -199,141 +200,154 @@ public class MainActivity extends AppCompatActivity {
             SignalRService.LocalBinder binder = (SignalRService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
-            String CLIENT_METHOD_BROADAST_MESSAGE = "AddMessage";
-            mService.mHubProxy.on(CLIENT_METHOD_BROADAST_MESSAGE,
-                    new SubscriptionHandler2<String, String>() {
-                        @Override
-                        public void run(final String name,final String msg) {
-                            final String finalMsg =  msg.toString();
-                            // display Toast message
-                            mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    System.out.print(finalMsg);
-                                    if(finalMsg.equals("ping")){
+            String CLIENT_METHOD_BROADAST_MESSAGE = "ReceiveMessage";
+            mService.mHubConnection.on(CLIENT_METHOD_BROADAST_MESSAGE,
+                    (message) -> {
+                        final String finalMsg = message.toString();
+                        // display Toast message
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                System.out.println(finalMsg);
+                                if (finalMsg.equals("ping")) {
+                                    onTouchEvent(null);
+                                    Toast.makeText(getApplicationContext(), "Connected", Toast.LENGTH_LONG).show();
+                                }
+                                if (finalMsg.equals("reset")) {
+                                    nameTextView = findViewById(R.id.nameTextView);
+                                    clubTextView = findViewById(R.id.clubTextView);
+                                    categoryTextView = findViewById(R.id.categoryTextView);
+                                    otherInfoTextView = findViewById(R.id.otherInfoTextView);
+                                    scoreTextText.setVisibility(View.VISIBLE);
+                                    nameTextView.setText("");
+                                    clubTextView.setText("");
+                                    categoryTextView.setText("");
+                                    otherInfoTextView.setText("");
+                                    ClearScores(true);
+                                    HideCompetitorSummary();
+                                    ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
+                                    inputAllowed = false;
+                                    ToggleInput(false);
+                                }
+                                if (!(finalMsg.startsWith("CompetitorInfo:") || finalMsg.startsWith("FlightComplete") || finalMsg.startsWith("JudgeInfo:")))
+                                    return;
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
                                         onTouchEvent(null);
-                                        Toast.makeText(getApplicationContext(), "Connected", Toast.LENGTH_LONG).show();
-                                    }
-                                    if(finalMsg.equals("reset")){
-                                        nameTextView = findViewById(R.id.nameTextView);
-                                        clubTextView = findViewById(R.id.clubTextView);
-                                        categoryTextView = findViewById(R.id.categoryTextView);
-                                        otherInfoTextView = findViewById(R.id.otherInfoTextView);
-                                        scoreTextText.setVisibility(View.VISIBLE);
-                                        nameTextView.setText("");
-                                        clubTextView.setText("");
-                                        categoryTextView.setText("");
-                                        otherInfoTextView.setText("");
-                                        ClearScores(true);
-                                        HideCompetitorSummary();
-                                        ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
-                                        inputAllowed = false;
-                                        ToggleInput(false);
-                                    }
-                                    if(!(finalMsg.startsWith("CompetitorInfo:")||finalMsg.startsWith("FlightComplete")||finalMsg.startsWith("JudgeInfo:"))) return;
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            onTouchEvent(null);
-                                            String judgeReEntry = null;
-                                            String[] messageParts = finalMsg.split(";");
-                                            for (String part : messageParts) {
-                                                String[] subMessageParts = part.split(":");
-                                                if (subMessageParts[0].equals("CompetitorInfo")) {
-                                                    if(finalMsg.contains("P"+panelNumber+"|")){
-                                                        String[] secondPartOfMessageArray = messageParts[1].split(":");
-                                                        String panelAndRoleOfMessage = secondPartOfMessageArray[0];
-                                                        if(!(panelAndRoleOfMessage.equals("P"+panelNumber+"|"+roleType) || panelAndRoleOfMessage.equals("P"+panelNumber+"|All") || (panelAndRoleOfMessage.equals("P"+panelNumber+"|E") && roleType.startsWith("E")))){
-                                                            continue;
-                                                        }
+                                        String judgeReEntry = null;
+                                        boolean reEntryForThisJudge = false;
+                                        String[] messageParts = finalMsg.split(";");
+                                        for (String part : messageParts) {
+                                            String[] subMessageParts = part.split(":");
+                                            if (subMessageParts[0].equals("CompetitorInfo")) {
+                                                if (finalMsg.contains("P" + panelNumber + "|")) {
+                                                    String[] secondPartOfMessageArray = messageParts[1].split(":");
+                                                    String panelAndRoleOfMessage = secondPartOfMessageArray[0];
+                                                    if (!(panelAndRoleOfMessage.equals("P" + panelNumber + "|" + roleType) || panelAndRoleOfMessage.equals("P" + panelNumber + "|All") || (panelAndRoleOfMessage.equals("P" + panelNumber + "|E") && roleType.startsWith("E")))) {
+                                                        continue;
                                                     }
-                                                    String[] competitorInfo = subMessageParts[1].split(",");
-                                                    nameTextView = findViewById(R.id.nameTextView);
-                                                    clubTextView = findViewById(R.id.clubTextView);
-                                                    categoryTextView = findViewById(R.id.categoryTextView);
-                                                    otherInfoTextView = findViewById(R.id.otherInfoTextView);
-                                                    scoreTextText.setVisibility(View.VISIBLE);
-                                                    nameTextView.setText(competitorInfo[0].replace("&comma",","));
-                                                    clubTextView.setText(competitorInfo[1].replace("&comma",","));
-                                                    categoryTextView.setText(competitorInfo[2].replace("&comma",","));
-                                                    otherInfoTextView.setText(competitorInfo[3]);
-                                                    ClearScores(true);
-                                                    HideCompetitorSummary();
-                                                    ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
-                                                    inputAllowed = false;
-                                                    ToggleInput(false);
                                                 }
-                                                if (subMessageParts[0].equals("ElementsConfirmed")) {
+                                                String[] competitorInfo = subMessageParts[1].split(",");
+                                                nameTextView = findViewById(R.id.nameTextView);
+                                                clubTextView = findViewById(R.id.clubTextView);
+                                                categoryTextView = findViewById(R.id.categoryTextView);
+                                                otherInfoTextView = findViewById(R.id.otherInfoTextView);
+                                                scoreTextText.setVisibility(View.VISIBLE);
+                                                nameTextView.setText(competitorInfo[0].replace("&comma", ","));
+                                                clubTextView.setText(competitorInfo[1].replace("&comma", ","));
+                                                categoryTextView.setText(competitorInfo[2].replace("&comma", ","));
+                                                otherInfoTextView.setText(competitorInfo[3]);
+                                                ClearScores(true);
+                                                HideCompetitorSummary();
+                                                ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
+                                                inputAllowed = false;
+                                                ToggleInput(false);
+                                            }
+                                            if (subMessageParts[0].equals("ElementsConfirmed")) {
+                                                elements = Integer.parseInt(subMessageParts[1]);
+                                                fullExercise = discipline.equals("DMT") ? elements == 2 : discipline.equals("TUM") ? elements == 8 : elements == 10;
+                                                ReduceOpacityOfDeductionBoxes(elements);
+                                                inputAllowed = true;
+                                                if (elements > 0) {
+                                                    ToggleInput(true);
+                                                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Please enter your score", Toast.LENGTH_SHORT);
+                                                } else {
+                                                    ToggleInput(false);
+                                                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Zero score", Toast.LENGTH_LONG);
+                                                }
+                                            }
+                                            if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter")) {
+                                                judgeReEntry = subMessageParts[0];
+                                            }
+                                            if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter") &&
+                                                    (       subMessageParts[0].equals("P" + panelNumber + "|" + roleType) ||
+                                                            subMessageParts[0].equals("P" + panelNumber + "|All") ||
+                                                            (subMessageParts[0].equals("P" + panelNumber + "|E") && roleType.startsWith("E")) ||
+                                                            (subMessageParts[0].equals("P" + panelNumber + "|HD") && (roleType.equals("HDT") || roleType.equals("HDS"))) ||
+                                                            (subMessageParts[0].equals("P" + panelNumber + "|T") && (roleType.equals("HDT"))) ||
+                                                            (subMessageParts[0].equals("P" + panelNumber + "|S") && (roleType.equals("HDS")))
+                                                    )){
+                                                reEntryForThisJudge = true;
+                                                ClearScores(true);
+                                                inputAllowed = true;
+                                                ToggleInput(true);
+                                                if(roleType.equals("HDT") || roleType.equals("HDS")){
+                                                    interimRoleType = "HD";
+                                                    interimScore = "";
+                                                    scoreTextText.setText("HORIZONTAL DISPLACEMENT");
+                                                    scoreText.setTextSize(180);
+                                                }
+                                                ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Please re-enter", Toast.LENGTH_LONG);
+                                            }
+                                            if (subMessageParts[0].equals("Elements")) {
+                                                if (judgeReEntry != null && reEntryForThisJudge == false) {
+                                                    //do nothing as it is a judge re-entry but not for this judge
+                                                } else {
                                                     elements = Integer.parseInt(subMessageParts[1]);
                                                     fullExercise = discipline.equals("DMT") ? elements == 2 : discipline.equals("TUM") ? elements == 8 : elements == 10;
                                                     ReduceOpacityOfDeductionBoxes(elements);
                                                     inputAllowed = true;
-                                                    if(elements > 0) {
-                                                        ToggleInput(true);
-                                                        ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Please enter your score", Toast.LENGTH_SHORT);
-                                                    }else{
-                                                        ToggleInput(false);
-                                                        ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Zero score", Toast.LENGTH_LONG);
-                                                    }
-                                                }
-                                                if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter")){
-                                                    judgeReEntry = subMessageParts[0];
-                                                }
-                                                if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter") && (subMessageParts[0].equals("P"+panelNumber+"|"+roleType) || subMessageParts[0].equals("P"+panelNumber+"|All") || (subMessageParts[0].equals("P"+panelNumber+"|E") && roleType.startsWith("E")))){
-                                                    ClearScores(true);
-                                                    inputAllowed = true;
                                                     ToggleInput(true);
-                                                    ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Please re-enter", Toast.LENGTH_LONG);
                                                 }
-                                                if (subMessageParts[0].equals("Elements")) {
-                                                    if(judgeReEntry != null && (!judgeReEntry.equals("P"+panelNumber+"|"+roleType) && !judgeReEntry.equals("P"+panelNumber+"|All"))) {
-                                                        //do nothing as it is a judge re-entry but not for this judge
-                                                    }else {
-                                                        elements = Integer.parseInt(subMessageParts[1]);
-                                                        fullExercise = discipline.equals("DMT") ? elements == 2 : discipline.equals("TUM") ? elements == 8 : elements == 10;
-                                                        ReduceOpacityOfDeductionBoxes(elements);
-                                                        inputAllowed = true;
-                                                        ToggleInput(true);
-                                                    }
-                                                }
-                                                if (subMessageParts[0].equals("FlightComplete")) {
-                                                    ClearScores(false);
-                                                    //ClearCompetitorInfo();
-                                                    inputAllowed = false;
-                                                    ToggleInput(false);
-                                                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Flight complete", Toast.LENGTH_LONG);
-                                                }
-                                                if (subMessageParts[0].equals("CompetitorSummary")) {
-                                                    scoreText.setText("");
-                                                    inputAllowed = false;
-                                                    ToggleInput(false);
-                                                    ShowCompetitorSummary(subMessageParts[1]);
-                                                }
-                                                if (subMessageParts[0].equals("ConfirmElements") && roleType.equals("CJP")) {
-                                                    PopUpClass popUpClass = new PopUpClass();
-                                                    popUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
-                                                }
-                                                if (subMessageParts[0].equals("JudgeInfo")) {
-                                                    String[] judges = subMessageParts[1].split("\\|");
-                                                    for (String judge : judges) {
-                                                        if(judge.startsWith(roleType)){
-                                                            String[] judgeRoleAndName = judge.split(",");
-                                                            judgeNameTextView = findViewById(R.id.judgeNameTextView);
-                                                            judgeNameTextView.setText(judgeRoleAndName[1]);
-                                                            SharedPreferences.Editor editor = SP.edit();
-                                                            editor.putString("judgeName", judgeRoleAndName[1]);
-                                                            editor.commit();
-                                                        }
+                                            }
+                                            if (subMessageParts[0].equals("FlightComplete")) {
+                                                ClearScores(false);
+                                                //ClearCompetitorInfo();
+                                                inputAllowed = false;
+                                                ToggleInput(false);
+                                                ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Flight complete", Toast.LENGTH_LONG);
+                                            }
+                                            if (subMessageParts[0].equals("CompetitorSummary")) {
+                                                scoreText.setText("");
+                                                inputAllowed = false;
+                                                ToggleInput(false);
+                                                ShowCompetitorSummary(subMessageParts[1]);
+                                            }
+                                            if (subMessageParts[0].equals("ConfirmElements") && roleType.equals("CJP")) {
+                                                PopUpClass popUpClass = new PopUpClass();
+                                                popUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
+                                            }
+                                            if (subMessageParts[0].equals("JudgeInfo")) {
+                                                String[] judges = subMessageParts[1].split("\\|");
+                                                for (String judge : judges) {
+                                                    if (judge.startsWith(roleType)) {
+                                                        String[] judgeRoleAndName = judge.split(",");
+                                                        judgeNameTextView = findViewById(R.id.judgeNameTextView);
+                                                        judgeNameTextView.setText(judgeRoleAndName[1]);
+                                                        SharedPreferences.Editor editor = SP.edit();
+                                                        editor.putString("judgeName", judgeRoleAndName[1]);
+                                                        editor.commit();
                                                     }
                                                 }
                                             }
                                         }
-                                    });
-                                }
-                            });
-                        }
+                                    }
+                                });
+                            }
+                        });
                     }
-                    , String.class,String.class);
+                    , String.class);
         }
 
         @Override
@@ -345,6 +359,11 @@ public class MainActivity extends AppCompatActivity {
     private void HideCompetitorSummary() {
         if(roleType.equals("CJP")) {
             scoreTextText.setText("PENALTY");
+        } else if (roleType.startsWith("E")){
+            scoreTextText.setText("TOTAL DEDUCTIONS");
+        } else if (roleType.equals("HDT") || roleType.equals("HDS")){
+            scoreTextText.setText("HORIZONTAL DISPLACEMENT");
+            scoreText.setTextSize(180);
         } else {
             scoreTextText.setText("SCORE");
         }
@@ -542,7 +561,11 @@ public class MainActivity extends AppCompatActivity {
                 ShowCustomToast(R.layout.custom_toast_red,(ViewGroup)findViewById(R.id.custom_toast_layout_red),"Please enter a score before submitting", Toast.LENGTH_SHORT);
                 return;
             }
-            message = scoreText.getText().toString();
+            if(roleType.equals("HDS") || roleType.equals("HDT")) {
+                message = interimRoleType + ":" + scoreText.getText().toString();
+            }else {
+                message = scoreText.getText().toString();
+            }
         }else {
                 int firstEmpty = find(deductionsArray, -1);
                 if (firstEmpty != -1) {
@@ -560,16 +583,38 @@ public class MainActivity extends AppCompatActivity {
         // Send the request message.
         try
         {
-            System.out.print("message = "+ message);
-            mService.sendMessage(message);
-            inputAllowed = false;
-            ShowCustomToast(R.layout.custom_toast_green,(ViewGroup)findViewById(R.id.custom_toast_layout_green),"Submitted", Toast.LENGTH_SHORT);
-            ToggleInput(false);
-            submitButton = findViewById(R.id.submitButton);
-            submitButton.setBackground(getDrawable(R.drawable.reenter_button_background));
-            submitButton.setText("RE-ENTER");
-            submitButton.setEnabled(true);
-            submitButton.setTextColor(Color.WHITE);
+                System.out.print("message = " + message);
+                mService.sendMessage(message);
+            if(roleType.equals("HDS") || roleType.equals("HDT")) {
+                if(interimRoleType == "HD") {
+                    interimRoleType = roleType.equals("HDS") ? "S" : "T";
+                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Submitted", Toast.LENGTH_SHORT);
+                    interimScore = scoreText.getText().toString();
+                    scoreTextText.setText(roleType.equals("HDS") ? "SYNCHRONISATION" : "TIME OF FLIGHT");
+                    scoreText.setText("");
+                }else{
+                    scoreTextText.setText("SCORES");
+                    scoreText.setTextSize(90);
+                    scoreText.setText(interimScore + "    " + scoreText.getText().toString());
+                    inputAllowed = false;
+                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Submitted", Toast.LENGTH_SHORT);
+                    ToggleInput(false);
+                    submitButton = findViewById(R.id.submitButton);
+                    submitButton.setBackground(getDrawable(R.drawable.reenter_button_background));
+                    submitButton.setText("RE-ENTER");
+                    submitButton.setEnabled(true);
+                    submitButton.setTextColor(Color.WHITE);
+                }
+            }else{
+                inputAllowed = false;
+                ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Submitted", Toast.LENGTH_SHORT);
+                ToggleInput(false);
+                submitButton = findViewById(R.id.submitButton);
+                submitButton.setBackground(getDrawable(R.drawable.reenter_button_background));
+                submitButton.setText("RE-ENTER");
+                submitButton.setEnabled(true);
+                submitButton.setTextColor(Color.WHITE);
+            }
         }
         catch (Exception err)
         {
@@ -657,7 +702,7 @@ public class MainActivity extends AppCompatActivity {
             if(scoreTextValue.equals("") && buttonValue.equals(".")) return;
             if(scoreTextValue.contains(".") && buttonValue.equals("."))return;
             float value = buttonValue == "." ? Float.parseFloat(scoreTextValue) : Float.parseFloat(scoreTextValue + buttonValue);
-            switch(roleType){
+            switch(interimRoleType){
                 case "HD" :
                 case "CJP":
                     if(value > 10){
@@ -675,7 +720,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
             String valueAfterDecimal = scoreTextValue.contains(".") ? scoreTextValue.substring(scoreTextValue.lastIndexOf('.') + 1) : null;
-            switch(roleType){
+            switch(interimRoleType){
                 case "CJP":
                 case "D":
                     if(valueAfterDecimal != null && valueAfterDecimal.length() > 0) return;
@@ -724,31 +769,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void UpdateScore(int[] deductionsArray) {
-        int firstEmpty = find(deductionsArray, -1);
-        if (firstEmpty != -1) {
-            if((!fullExercise && firstEmpty != elements) || (fullExercise && firstEmpty != elements + 1)) {
-                scoreText.setText("");
-                return;
-            }
-        }
-
-        float maxMark = 10.0f;
-        //elements = 10;
-        switch (interfaceType) {
-            case "DMTDeduction":
-                maxMark = elements == 0 ? 0.0f : elements + 8.0f;
-                break;
-            case "TUMDeduction":
-                maxMark = elements == 0 ? 0.0f : elements + 2.0f;
-                break;
-            case "TRADeduction":
-                maxMark = 1.0f * elements;
-                break;
-        }
-        if(elements == 0) maxMark = 0.0f;
         float deduction = CalculateDeduction(deductionsArray);
-        float total = maxMark - deduction;
-        scoreText.setText(String.valueOf(total));
+        scoreText.setText(String.valueOf(deduction));
     }
 
     private int[] getDeductions() {
@@ -841,11 +863,9 @@ public class MainActivity extends AppCompatActivity {
     private void updateSettings(){
         panelNumber = SP.getString("panelNumber","0");
         roleType = SP.getString("roleType","1");
+        interimRoleType = (roleType.equals("HDS") || roleType.equals("HDT")) ? "HD" : roleType;
         discipline = SP.getString("discipline","TRA");
         ipAddressAssignMode = SP.getString("ipAddressAssignMode","Automatic");
-        if(mService != null) {
-            mService.mHubProxy.invoke("SetUserName", "P" + panelNumber + "|" + roleType);
-        }
 
         if(ipAddressAssignMode.equals("Automatic")) {
             SharedPreferences.Editor editor = SP.edit();
@@ -865,6 +885,21 @@ public class MainActivity extends AppCompatActivity {
                 case "5":
                     editor.putString("ipAddress", "10.0.0.15");
                     break;
+                case "6":
+                    editor.putString("ipAddress", "10.0.0.16");
+                    break;
+                case "7":
+                    editor.putString("ipAddress", "10.0.0.17");
+                    break;
+                case "8":
+                    editor.putString("ipAddress", "10.0.0.18");
+                    break;
+                case "9":
+                    editor.putString("ipAddress", "10.0.0.19");
+                    break;
+                case "10":
+                    editor.putString("ipAddress", "10.0.0.20");
+                    break;
                 default:
                     editor.putString("ipAddress", "10.0.0.11");
                     break;
@@ -872,7 +907,7 @@ public class MainActivity extends AppCompatActivity {
             editor.commit();
         }
 
-        if(roleType.equals("HD") || roleType.equals("T") || roleType.equals("D") || roleType.equals("S") || roleType.equals("CJP")) {
+        if(roleType.equals("HD") || roleType.equals("HDT") || roleType.equals("HDS") || roleType.equals("T") || roleType.equals("D") || roleType.equals("S") || roleType.equals("CJP")) {
             interfaceType = "FullScore";
             setContentView(R.layout.activity_main_full_score);
         }else if (discipline.equals("DMT")) {
@@ -904,6 +939,11 @@ public class MainActivity extends AppCompatActivity {
         judgeNameTextView.setText(SP.getString("judgeName","SURNAME FirstName"));
         if(roleType.equals("CJP")) {
             scoreTextText.setText("PENALTY");
+        } else if (roleType.startsWith("E")){
+            scoreTextText.setText("TOTAL DEDUCTIONS");
+        } else if (roleType.equals("HDT") || roleType.equals("HDS")){
+            scoreTextText.setText("HORIZONTAL DISPLACEMENT");
+            scoreText.setTextSize(180);
         } else {
             scoreTextText.setText("SCORE");
         }

@@ -7,6 +7,11 @@
         <item>Panel 3</item>
         <item>Panel 4</item>
         <item>Panel 5</item>
+        <item>Panel 6</item>
+        <item>Panel 7</item>
+        <item>Panel 8</item>
+        <item>Panel 9</item>
+        <item>Panel 10</item>
     </string-array>
 
     <string-array name="panelListValues">
@@ -16,6 +21,11 @@
         <item>3</item>
         <item>4</item>
         <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
     </string-array>
 
     <string-array name="disciplineListArray">
@@ -40,6 +50,8 @@
         <item>E5</item>
         <item>E6</item>
         <item>HD</item>
+        <item>HDT</item>
+        <item>HDS</item>
         <item>D</item>
         <item>T</item>
         <item>S</item>
@@ -54,6 +66,8 @@
         <item>E5</item>
         <item>E6</item>
         <item>HD</item>
+        <item>HDT</item>
+        <item>HDS</item>
         <item>D</item>
         <item>T</item>
         <item>S</item>
