@@ -604,6 +604,7 @@ public class MainActivity extends AppCompatActivity {
                     submitButton.setText("RE-ENTER");
                     submitButton.setEnabled(true);
                     submitButton.setTextColor(Color.WHITE);
+                    interimRoleType = "HD";
                 }
             }else{
                 inputAllowed = false;
