@@ -14,24 +14,16 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.microsoft.signalr.*;
 
-import microsoft.aspnet.signalr.client.ConnectionState;
-import microsoft.aspnet.signalr.client.Platform;
-import microsoft.aspnet.signalr.client.SignalRFuture;
-import microsoft.aspnet.signalr.client.http.android.AndroidPlatformComponent;
-import microsoft.aspnet.signalr.client.hubs.HubConnection;
-import microsoft.aspnet.signalr.client.hubs.HubProxy;
-import microsoft.aspnet.signalr.client.hubs.SubscriptionHandler1;
-import microsoft.aspnet.signalr.client.hubs.SubscriptionHandler2;
-import microsoft.aspnet.signalr.client.transport.ClientTransport;
-import microsoft.aspnet.signalr.client.transport.ServerSentEventsTransport;
 
 public class SignalRService extends Service {
     public HubConnection mHubConnection;
-    public HubProxy mHubProxy;
+    //public HubProxy mHubProxy;
     private final IBinder mBinder = new LocalBinder(); // Binder given to clients
     private SharedPreferences SP;
     private String ipAddress;
@@ -83,7 +75,7 @@ public class SignalRService extends Service {
      */
     public void sendMessage(String message) {
         String SERVER_METHOD_SEND = "send";
-        mHubProxy.invoke(SERVER_METHOD_SEND, message);
+        mHubConnection.send(SERVER_METHOD_SEND, message);
     }
 
     /**
@@ -91,19 +83,26 @@ public class SignalRService extends Service {
      */
     public void sendMessage_To(String receiverName, String message) {
         String SERVER_METHOD_SEND_TO = "Send";
-        mHubProxy.invoke(SERVER_METHOD_SEND_TO, receiverName, message);
+        mHubConnection.send(SERVER_METHOD_SEND_TO, receiverName, message);
     }
 
     public void startSignalR() {
-        Platform.loadPlatformComponent(new AndroidPlatformComponent());
+        //Platform.loadPlatformComponent(new AndroidPlatformComponent());
 
         ipAddress = SP.getString("ipAddress","192.168.0.18");
 
-        String serverUrl = "http://"+ipAddress+":8081/signalr";
-        mHubConnection = new HubConnection(serverUrl);
+        String serverUrl = "http://"+ipAddress+":8081/scorebase";
+        mHubConnection = HubConnectionBuilder.create(serverUrl).withTransport(TransportEnum.WEBSOCKETS).shouldSkipNegotiate(true).build();
         String SERVER_HUB_CHAT = "SimpleHub";
-        mHubProxy = mHubConnection.createHubProxy(SERVER_HUB_CHAT);
-        ClientTransport clientTransport = new ServerSentEventsTransport(mHubConnection.getLogger());
+        try {
+            mHubConnection.start().blockingAwait();
+            Toast.makeText(getApplicationContext(), "Connected to Panel Manager", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Log.e("SimpleSignalR", e.toString());
+            return;
+        }
+        //mHubProxy = mHubConnection.createHubProxy(SERVER_HUB_CHAT);
+        /*ClientTransport clientTransport = new ServerSentEventsTransport(mHubConnection.getLogger());
         final SignalRFuture<Void> signalRFuture = mHubConnection.start(clientTransport);
         try {
             signalRFuture.get(1, TimeUnit.SECONDS);
@@ -111,11 +110,11 @@ public class SignalRService extends Service {
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             Log.e("SimpleSignalR", e.toString());
             return;
-        }
+        }*/
         panelNumber = SP.getString("panelNumber","0");
         roleType = SP.getString("roleType","1");
-        mHubProxy.invoke("SetUserName","P" + panelNumber + "|" + roleType);
-        mHubProxy.invoke("JoinGroup","Judges");
+        mHubConnection.send("SetUserName","P" + panelNumber + "|" + roleType);
+        mHubConnection.send("JoinGroup","Judges");
 
 
     }
