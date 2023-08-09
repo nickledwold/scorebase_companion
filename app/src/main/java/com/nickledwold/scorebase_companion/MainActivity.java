@@ -31,6 +31,8 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.jakewharton.processphoenix.ProcessPhoenix;
 import com.microsoft.signalr.HubConnectionState;
 
 import java.util.ArrayList;
@@ -765,6 +767,15 @@ public class MainActivity extends AppCompatActivity {
         if((clickTime - lastClickTime) < DOUBLE_CLICK_TIME_DELTA){
             Intent intent = new Intent(this, SettingsPreferenceActivity.class);
             startActivity(intent);
+        }
+        lastClickTime = clickTime;
+    }
+
+    public void panelAndRoleTextViewPressed(View view){
+        onTouchEvent(null);
+        long clickTime = System.currentTimeMillis();
+        if((clickTime - lastClickTime) < DOUBLE_CLICK_TIME_DELTA){
+            ProcessPhoenix.triggerRebirth(getApplicationContext());
         }
         lastClickTime = clickTime;
     }

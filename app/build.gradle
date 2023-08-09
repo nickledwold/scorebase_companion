@@ -35,4 +35,5 @@ dependencies {
     //implementation files('libs/signalr-client-sdk.jar')
     //implementation files('libs/signalr-client-sdk-android.jar')
     implementation 'com.microsoft.signalr:signalr:7.0.0'
+    implementation 'com.jakewharton:process-phoenix:2.1.2'
 }

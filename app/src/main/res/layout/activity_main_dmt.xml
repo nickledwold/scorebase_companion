@@ -467,6 +467,7 @@
         android:layout_marginEnd="10dp"
         android:fontFamily="@font/myriad"
         android:text="P1 | E4"
+        android:onClick="panelAndRoleTextViewPressed"
         android:textColor="@android:color/white"
         android:textSize="25sp"
         app:layout_constraintEnd_toEndOf="@+id/roleInfoPanel"
