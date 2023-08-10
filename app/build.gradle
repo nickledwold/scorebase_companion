@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.nickledwold.scorebase_companion"
         minSdkVersion 22
@@ -21,6 +20,7 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+    namespace 'com.nickledwold.scorebase_companion'
 }
 
 dependencies {
@@ -32,8 +32,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.google.code.gson:gson:2.3.1'
-    //implementation files('libs/signalr-client-sdk.jar')
-    //implementation files('libs/signalr-client-sdk-android.jar')
-    implementation 'com.microsoft.signalr:signalr:7.0.0'
     implementation 'com.jakewharton:process-phoenix:2.1.2'
+    implementation 'net.servicestack:client:1.0.49'
 }
