@@ -3,21 +3,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.Context;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -32,17 +28,17 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.jakewharton.processphoenix.ProcessPhoenix;
 
-import net.servicestack.client.AsyncResult;
-import net.servicestack.client.JsonServiceClient;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.jakewharton.processphoenix.ProcessPhoenix;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import okhttp3.FormBody;
 
 public class MainActivity extends AppCompatActivity implements ContinuousHttpGet.OnHttpResultListener {
 
@@ -93,11 +89,18 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
     private boolean showWallpaper;
     private ContinuousHttpGet continuousHttpGet;
 
+    public String Status = null;
+
+    private PopUpClass popUpClass;
+
+    private Boolean reEntryInProgress = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.splashScreenTheme);
         super.onCreate(savedInstanceState);
         mHandler = new Handler(Looper.getMainLooper());
+        popUpClass = new PopUpClass();
 
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -129,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         ToggleInput(false);
         countDownTimer = new MyCountDownTimer(startTime,interval);
 
-        continuousHttpGet = new ContinuousHttpGet(this);
+        continuousHttpGet = new ContinuousHttpGet(this, SP);
 
     }
 
@@ -145,75 +148,73 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         continuousHttpGet.stopContinuousHttpGet();
     }
 
-    public void onHttpResult(final String result) {
+    public void onHttpErrorOrException() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                // Update the UI based on the result
-                System.out.println(result);
-                final String finalMsg = result.toString();
-                // display Toast message
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        System.out.println(finalMsg);
-                        if (finalMsg.equals("ping")) {
+                Toast.makeText(getApplicationContext(), "Unable to connect to the SCOREBASE API - please seek assistance", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    public void onHttpResult(final String result) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ApiResponseObjects.GetCompetitionDataResponse response = null;
+        try {
+            response = objectMapper.readValue(result, ApiResponseObjects.GetCompetitionDataResponse.class);
+        } catch (JsonProcessingException e) {
+            System.out.println(e);
+            return;
+        }
+        ApiResponseObjects.CompetitionData competitionData = response.getResult();
+        if(!competitionData.getPanelNumber().toString().equals(panelNumber)) return;
+        Boolean judgeNeedsReEntering = DoesJudgeNeedReEntering(competitionData.getJudgeInformation());
+        if(!competitionData.getStatus().equals(Status) || (judgeNeedsReEntering && !reEntryInProgress)) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            System.out.println(result);
                             onTouchEvent(null);
-                            Toast.makeText(getApplicationContext(), "Connected", Toast.LENGTH_LONG).show();
-                        }
-                        if (finalMsg.equals("reset")) {
-                            nameTextView = findViewById(R.id.nameTextView);
-                            clubTextView = findViewById(R.id.clubTextView);
-                            categoryTextView = findViewById(R.id.categoryTextView);
-                            otherInfoTextView = findViewById(R.id.otherInfoTextView);
-                            scoreTextText.setVisibility(View.VISIBLE);
-                            nameTextView.setText("");
-                            clubTextView.setText("");
-                            categoryTextView.setText("");
-                            otherInfoTextView.setText("");
-                            ClearScores(true);
-                            HideCompetitorSummary();
-                            ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
-                            inputAllowed = false;
-                            ToggleInput(false);
-                        }
-                        if (!(finalMsg.startsWith("CompetitorInfo:") || finalMsg.startsWith("FlightComplete") || finalMsg.startsWith("JudgeInfo:")))
-                            return;
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                onTouchEvent(null);
-                                String judgeReEntry = null;
-                                boolean reEntryForThisJudge = false;
-                                String[] messageParts = finalMsg.split(";");
-                                for (String part : messageParts) {
-                                    String[] subMessageParts = part.split(":");
-                                    if (subMessageParts[0].equals("CompetitorInfo")) {
-                                        if (finalMsg.contains("P" + panelNumber + "|")) {
-                                            String[] secondPartOfMessageArray = messageParts[1].split(":");
-                                            String panelAndRoleOfMessage = secondPartOfMessageArray[0];
-                                            if (!(panelAndRoleOfMessage.equals("P" + panelNumber + "|" + roleType) || panelAndRoleOfMessage.equals("P" + panelNumber + "|All") || (panelAndRoleOfMessage.equals("P" + panelNumber + "|E") && roleType.startsWith("E")))) {
-                                                continue;
-                                            }
-                                        }
-                                        String[] competitorInfo = subMessageParts[1].split(",");
-                                        nameTextView = findViewById(R.id.nameTextView);
-                                        clubTextView = findViewById(R.id.clubTextView);
-                                        categoryTextView = findViewById(R.id.categoryTextView);
-                                        otherInfoTextView = findViewById(R.id.otherInfoTextView);
-                                        scoreTextText.setVisibility(View.VISIBLE);
-                                        nameTextView.setText(competitorInfo[0].replace("&comma", ","));
-                                        clubTextView.setText(competitorInfo[1].replace("&comma", ","));
-                                        categoryTextView.setText(competitorInfo[2].replace("&comma", ","));
-                                        otherInfoTextView.setText(competitorInfo[3]);
-                                        ClearScores(true);
-                                        HideCompetitorSummary();
-                                        ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
-                                        inputAllowed = false;
-                                        ToggleInput(false);
-                                    }
-                                    if (subMessageParts[0].equals("ElementsConfirmed")) {
-                                        elements = Integer.parseInt(subMessageParts[1]);
+                            if (competitionData.getStatus().equals("")) {
+                                nameTextView = findViewById(R.id.nameTextView);
+                                clubTextView = findViewById(R.id.clubTextView);
+                                categoryTextView = findViewById(R.id.categoryTextView);
+                                otherInfoTextView = findViewById(R.id.otherInfoTextView);
+                                scoreTextText.setVisibility(View.VISIBLE);
+                                nameTextView.setText("");
+                                clubTextView.setText("");
+                                categoryTextView.setText("");
+                                otherInfoTextView.setText("");
+                                ClearScores(true);
+                                HideCompetitorSummary();
+                                ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
+                                inputAllowed = false;
+                                ToggleInput(false);
+                            }
+
+                            if(competitionData.getStatus().equals("COMPETING") || competitionData.getStatus().equals("AWAITING ELEMENTS") || competitionData.getStatus().equals("ELEMENTS CONFIRMED")) {
+                                    ApiResponseObjects.CompetitorInformation competitorInfo = competitionData.getCompetitorInformation();
+                                    nameTextView = findViewById(R.id.nameTextView);
+                                    clubTextView = findViewById(R.id.clubTextView);
+                                    categoryTextView = findViewById(R.id.categoryTextView);
+                                    otherInfoTextView = findViewById(R.id.otherInfoTextView);
+                                    scoreTextText.setVisibility(View.VISIBLE);
+                                    nameTextView.setText(competitorInfo.getName());
+                                    clubTextView.setText(competitorInfo.getClub());
+                                    categoryTextView.setText(competitorInfo.getCategory());
+                                    String otherInfo = "Exercise " + competitorInfo.getExercise() +" | Flight " + competitorInfo.getFlight() + " |  No " + competitorInfo.getCompetitorNumber() + "/" + competitorInfo.getCompetitorCount();
+                                    otherInfoTextView.setText(otherInfo);
+                                    ClearScores(true);
+                                    HideCompetitorSummary();
+                                    ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
+                                    inputAllowed = false;
+                                    ToggleInput(false);
+                                }
+                                if (competitionData.getStatus().equals("ELEMENTS CONFIRMED") && !judgeNeedsReEntering) {
+                                        elements = competitionData.getCompetitorInformation().getElements();
                                         fullExercise = discipline.equals("DMT") ? elements == 2 : discipline.equals("TUM") ? elements == 8 : elements == 10;
                                         ReduceOpacityOfDeductionBoxes(elements);
                                         inputAllowed = true;
@@ -224,78 +225,71 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                             ToggleInput(false);
                                             ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Zero score", Toast.LENGTH_LONG);
                                         }
+                                }
+                                if(judgeNeedsReEntering) {
+                                    ClearScores(true);
+                                    elements = competitionData.getCompetitorInformation().getElements();
+                                    fullExercise = discipline.equals("DMT") ? elements == 2 : discipline.equals("TUM") ? elements == 8 : elements == 10;
+                                    ReduceOpacityOfDeductionBoxes(elements);
+                                    inputAllowed = true;
+                                    reEntryInProgress = true;
+                                    ToggleInput(true);
+                                    if (roleType.equals("HDT") || roleType.equals("HDS")) {
+                                        interimRoleType = "HD";
+                                        interimScore = "";
+                                        scoreTextText.setText("HORIZONTAL DISPLACEMENT");
+                                        scoreText.setTextSize(180);
                                     }
-                                    if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter")) {
-                                        judgeReEntry = subMessageParts[0];
+                                    ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Please re-enter", Toast.LENGTH_LONG);
+                                }
+                                if (competitionData.getStatus().equals("FLIGHT COMPLETE")) {
+                                    ClearScores(false);
+                                    inputAllowed = false;
+                                    ToggleInput(false);
+                                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Flight complete", Toast.LENGTH_LONG);
+                                }
+                                if (competitionData.getStatus().equals("WAITING") || competitionData.getStatus().equals("FLIGHT COMPLETE")) {
+                                    scoreText.setText("");
+                                    inputAllowed = false;
+                                    ToggleInput(false);
+                                    ShowCompetitorSummary(competitionData.getCompetitorInformation().getCompetitorSummary());
+                                }
+                                if (competitionData.getStatus().equals("AWAITING ELEMENTS") && roleType.equals("CJP")) {
+                                    if(popUpClass.popupWindowIsShowing) {
+                                        popUpClass.closePopupWindow();
                                     }
-                                    if (subMessageParts.length > 1 && subMessageParts[1].equals("ReEnter") &&
-                                            (       subMessageParts[0].equals("P" + panelNumber + "|" + roleType) ||
-                                                    subMessageParts[0].equals("P" + panelNumber + "|All") ||
-                                                    (subMessageParts[0].equals("P" + panelNumber + "|E") && roleType.startsWith("E")) ||
-                                                    (subMessageParts[0].equals("P" + panelNumber + "|HD") && (roleType.equals("HDT") || roleType.equals("HDS"))) ||
-                                                    (subMessageParts[0].equals("P" + panelNumber + "|T") && (roleType.equals("HDT"))) ||
-                                                    (subMessageParts[0].equals("P" + panelNumber + "|S") && (roleType.equals("HDS")))
-                                            )){
-                                        reEntryForThisJudge = true;
-                                        ClearScores(true);
-                                        inputAllowed = true;
-                                        ToggleInput(true);
-                                        if(roleType.equals("HDT") || roleType.equals("HDS")){
-                                            interimRoleType = "HD";
-                                            interimScore = "";
-                                            scoreTextText.setText("HORIZONTAL DISPLACEMENT");
-                                            scoreText.setTextSize(180);
-                                        }
-                                        ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Please re-enter", Toast.LENGTH_LONG);
-                                    }
-                                    if (subMessageParts[0].equals("Elements")) {
-                                        if (judgeReEntry != null && reEntryForThisJudge == false) {
-                                            //do nothing as it is a judge re-entry but not for this judge
-                                        } else {
-                                            elements = Integer.parseInt(subMessageParts[1]);
-                                            fullExercise = discipline.equals("DMT") ? elements == 2 : discipline.equals("TUM") ? elements == 8 : elements == 10;
-                                            ReduceOpacityOfDeductionBoxes(elements);
-                                            inputAllowed = true;
-                                            ToggleInput(true);
-                                        }
-                                    }
-                                    if (subMessageParts[0].equals("FlightComplete")) {
-                                        ClearScores(false);
-                                        //ClearCompetitorInfo();
-                                        inputAllowed = false;
-                                        ToggleInput(false);
-                                        ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Flight complete", Toast.LENGTH_LONG);
-                                    }
-                                    if (subMessageParts[0].equals("CompetitorSummary")) {
-                                        scoreText.setText("");
-                                        inputAllowed = false;
-                                        ToggleInput(false);
-                                        ShowCompetitorSummary(subMessageParts[1]);
-                                    }
-                                    if (subMessageParts[0].equals("ConfirmElements") && roleType.equals("CJP")) {
-                                        PopUpClass popUpClass = new PopUpClass();
-                                        popUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
-                                    }
-                                    if (subMessageParts[0].equals("JudgeInfo")) {
-                                        String[] judges = subMessageParts[1].split("\\|");
-                                        for (String judge : judges) {
-                                            if (judge.startsWith(roleType)) {
-                                                String[] judgeRoleAndName = judge.split(",");
-                                                judgeNameTextView = findViewById(R.id.judgeNameTextView);
-                                                judgeNameTextView.setText(judgeRoleAndName[1]);
-                                                SharedPreferences.Editor editor = SP.edit();
-                                                editor.putString("judgeName", judgeRoleAndName[1]);
-                                                editor.commit();
-                                            }
-                                        }
+                                    popUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
+                                }
+                            if (!competitionData.getStatus().equals("AWAITING ELEMENTS") && roleType.equals("CJP") && popUpClass != null && popUpClass.popupWindowIsShowing) {
+                                popUpClass.closePopupWindow();
+                            }
+                            if(competitionData.getJudgeInformation().size() > 0) {
+                                for (ApiResponseObjects.JudgeInformation judgeInformation : competitionData.getJudgeInformation()) {
+                                    if (judgeInformation.getJudgeRole().equals(roleType) || (roleType.equals("HDT") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("T"))) || (roleType.equals("HDS") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("S")))) {
+                                        judgeNameTextView = findViewById(R.id.judgeNameTextView);
+                                        judgeNameTextView.setText(judgeInformation.getJudgeName());
+                                        SharedPreferences.Editor editor = SP.edit();
+                                        editor.putString("judgeName", judgeInformation.getJudgeName());
+                                        editor.commit();
                                     }
                                 }
                             }
-                        });
-                    }
-                });
+                        }
+                    });
+                }
+            });
+        }
+        Status = competitionData.getStatus();
+    }
+
+    private Boolean DoesJudgeNeedReEntering(List<ApiResponseObjects.JudgeInformation> judgeInformationList) {
+        List<ApiResponseObjects.JudgeInformation> trimmedJudgeInformationList = new ArrayList<>();
+        for (ApiResponseObjects.JudgeInformation judgeInformation : judgeInformationList) {
+            if ((judgeInformation.getJudgeRole().equals(roleType) || (roleType.equals("HDT") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("T"))) || (roleType.equals("HDS") && (judgeInformation.getJudgeRole().equals("HD")|| judgeInformation.getJudgeRole().equals("S")))) && judgeInformation.isReEntryRequested()) {
+                return true;
             }
-        });
+        }
+        return false;
     }
 
     private void ClearScoreAndScoreText() {
@@ -349,18 +343,10 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         }
     }
 
-    private void ShowCompetitorSummary(String scores) {
-        String[] scoreParts = scores.split(",");
-        scoreText.setText(ReplaceEmptyScore(scoreParts[0],2));
+    private void ShowCompetitorSummary(ApiResponseObjects.CompetitorSummary competitorSummary) {
+        scoreText.setText(String.format("%.2f", competitorSummary.getExecution()));
         scoreText.setTextColor(Color.WHITE);
         scoreTextText.setText("TOTAL EXECUTION SCORE");
-    }
-
-    private String ReplaceEmptyScore(String score, int decimals){
-        if(score.isEmpty() || score == null || score.trim().isEmpty()){
-            return decimals == 2 ? "0.00" : decimals == 1 ? "0.0" : "";
-        }
-        return score;
     }
 
     private void ClearCompetitorInfo() {
@@ -512,71 +498,77 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         super.onDestroy();
     }
 
-    public void submitButtonpressed(View button){
+    public void submitButtonpressed(View button) {
+        String ipAddress = SP.getString("ipAddress", "10.0.0.11");
+        String submitScoreUrl = "http://"+ipAddress+":1337/submitScore";
+        String requestReEntryUrl = "http://"+ipAddress+":1337/requestReEntry";
         onTouchEvent(null);
-        String buttonText = ((Button)button).getText().toString();
-        if(buttonText.equals("RE-ENTER")){
-            ShowCustomToast(R.layout.custom_toast_amber,(ViewGroup)findViewById(R.id.custom_toast_layout_amber),"Re-entry requested\n\nPlease wait", Toast.LENGTH_SHORT);
-            //TODO REQUEST RE-ENTRY
-            //mService.sendMessage("RequestReEntry");
+        String buttonText = ((Button) button).getText().toString();
+        if (buttonText.equals("RE-ENTER")) {
+            ShowCustomToast(R.layout.custom_toast_amber, (ViewGroup) findViewById(R.id.custom_toast_layout_amber), "Re-entry requested\n\nPlease wait", Toast.LENGTH_SHORT);
+            FormBody formBody = new FormBody.Builder()
+                    .add("Role", roleType)
+                    .build();
+            NetworkUtils.performPostRequestWithRetry(requestReEntryUrl, formBody);
             submitButton.setEnabled(false);
             submitButton.setTextColor(Color.GRAY);
         }
-        if(!inputAllowed) return;
-        String message = "";
-        if (interfaceType.equals("FullScore")){
+        if (!inputAllowed) return;
+        String score = "";
+        if (interfaceType.equals("FullScore")) {
             String scoreTextValue = scoreText.getText().toString();
-            if(TextUtils.isEmpty(scoreTextValue)) {
-                ShowCustomToast(R.layout.custom_toast_red,(ViewGroup)findViewById(R.id.custom_toast_layout_red),"Please enter a score before submitting", Toast.LENGTH_SHORT);
+            if (TextUtils.isEmpty(scoreTextValue)) {
+                ShowCustomToast(R.layout.custom_toast_red, (ViewGroup) findViewById(R.id.custom_toast_layout_red), "Please enter a score before submitting", Toast.LENGTH_SHORT);
                 return;
             }
-            if(roleType.equals("HDS") || roleType.equals("HDT")) {
-                message = interimRoleType + ":" + scoreText.getText().toString();
-            }else {
-                message = scoreText.getText().toString();
+            FormBody formBody;
+            if (roleType.equals("HDS") || roleType.equals("HDT")) {
+                score = scoreText.getText().toString();
+                formBody = new FormBody.Builder()
+                        .add("Role", interimRoleType)
+                        .add("Score", score)
+                        .build();
+            } else {
+                score = scoreText.getText().toString();
+                formBody = new FormBody.Builder()
+                        .add("Role", roleType)
+                        .add("Score", score)
+                        .build();
             }
-        }else {
-                int firstEmpty = find(deductionsArray, -1);
-                if (firstEmpty != -1) {
-                    if((!fullExercise && firstEmpty != elements) || (fullExercise && firstEmpty != elements + 1)) {
-                        ShowCustomToast(R.layout.custom_toast_red,(ViewGroup)findViewById(R.id.custom_toast_layout_red),"Please enter all deductions", Toast.LENGTH_SHORT);
-                        return;
-                    }
+            NetworkUtils.performPostRequestWithRetry(submitScoreUrl, formBody);
+            reEntryInProgress = false;
+        } else {
+            int firstEmpty = find(deductionsArray, -1);
+            if (firstEmpty != -1) {
+                if ((!fullExercise && firstEmpty != elements) || (fullExercise && firstEmpty != elements + 1)) {
+                    ShowCustomToast(R.layout.custom_toast_red, (ViewGroup) findViewById(R.id.custom_toast_layout_red), "Please enter all deductions", Toast.LENGTH_SHORT);
+                    return;
                 }
-                if(elements == 0)return;
+            }
+            if (elements == 0) return;
             for (int i = 0; i < deductionsArray.length; i++) {
-                    message += deductionsArray[i];
-                    if (i != deductionsArray.length - 1) message += ",";
-                }
+                score += deductionsArray[i];
+                if (i != deductionsArray.length - 1) score += ",";
+            }
+            FormBody formBody = new FormBody.Builder()
+                    .add("Role", roleType)
+                    .add("Deductions", score)
+                    .build();
+            NetworkUtils.performPostRequestWithRetry(submitScoreUrl, formBody);
+            reEntryInProgress = false;
         }
-        // Send the request message.
-        try
-        {
-                System.out.print("message = " + message);
-                //mService.sendMessage(message);
-                //TODO: SEND MESSAGE
-            if(roleType.equals("HDS") || roleType.equals("HDT")) {
-                if(interimRoleType == "HD") {
-                    interimRoleType = roleType.equals("HDS") ? "S" : "T";
-                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Submitted", Toast.LENGTH_SHORT);
-                    interimScore = scoreText.getText().toString();
-                    scoreTextText.setText(roleType.equals("HDS") ? "SYNCHRONISATION" : "TIME OF FLIGHT");
-                    scoreText.setText("");
-                }else{
-                    scoreTextText.setText("SCORES");
-                    scoreText.setTextSize(90);
-                    scoreText.setText(interimScore + "    " + scoreText.getText().toString());
-                    inputAllowed = false;
-                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Submitted", Toast.LENGTH_SHORT);
-                    ToggleInput(false);
-                    submitButton = findViewById(R.id.submitButton);
-                    submitButton.setBackground(getDrawable(R.drawable.reenter_button_background));
-                    submitButton.setText("RE-ENTER");
-                    submitButton.setEnabled(true);
-                    submitButton.setTextColor(Color.WHITE);
-                    interimRoleType = "HD";
-                }
-            }else{
+
+        if (roleType.equals("HDS") || roleType.equals("HDT")) {
+            if (interimRoleType.equals("HD")) {
+                interimRoleType = roleType.equals("HDS") ? "S" : "T";
+                ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Submitted", Toast.LENGTH_SHORT);
+                interimScore = scoreText.getText().toString();
+                scoreTextText.setText(roleType.equals("HDS") ? "SYNCHRONISATION" : "TIME OF FLIGHT");
+                scoreText.setText("");
+            } else {
+                scoreTextText.setText("SCORES");
+                scoreText.setTextSize(90);
+                scoreText.setText(interimScore + "    " + scoreText.getText().toString());
                 inputAllowed = false;
                 ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Submitted", Toast.LENGTH_SHORT);
                 ToggleInput(false);
@@ -585,11 +577,17 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                 submitButton.setText("RE-ENTER");
                 submitButton.setEnabled(true);
                 submitButton.setTextColor(Color.WHITE);
+                interimRoleType = "HD";
             }
-        }
-        catch (Exception err)
-        {
-            System.out.println("Sending the message failed." +  err.getMessage());
+        } else {
+            inputAllowed = false;
+            ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Submitted", Toast.LENGTH_SHORT);
+            ToggleInput(false);
+            submitButton = findViewById(R.id.submitButton);
+            submitButton.setBackground(getDrawable(R.drawable.reenter_button_background));
+            submitButton.setText("RE-ENTER");
+            submitButton.setEnabled(true);
+            submitButton.setTextColor(Color.WHITE);
         }
     }
 
@@ -672,7 +670,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             String scoreTextValue = scoreText.getText().toString();
             if(scoreTextValue.equals("") && buttonValue.equals(".")) return;
             if(scoreTextValue.contains(".") && buttonValue.equals("."))return;
-            float value = buttonValue == "." ? Float.parseFloat(scoreTextValue) : Float.parseFloat(scoreTextValue + buttonValue);
+            float value = buttonValue.equals(".") ? Float.parseFloat(scoreTextValue) : Float.parseFloat(scoreTextValue + buttonValue);
             switch(interimRoleType){
                 case "HD" :
                 case "CJP":
@@ -983,6 +981,8 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
 
     public class PopUpClass{
 
+        PopupWindow popupWindow = null;
+        Boolean popupWindowIsShowing = false;
         TextView elementsTextView;
         public void showPopupWindow(final View view){
 
@@ -993,8 +993,9 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             DisplayMetrics displayMetrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             int width = displayMetrics.widthPixels;
-            final PopupWindow popupWindow = new PopupWindow(popupLayout, width - 100,LinearLayout.LayoutParams.WRAP_CONTENT);
+            popupWindow = new PopupWindow(popupLayout, width - 100,LinearLayout.LayoutParams.WRAP_CONTENT);
             popupWindow.showAtLocation(view,Gravity.CENTER,0,0);
+            popupWindowIsShowing = true;
             elementsTextView.setText(discipline.equals("DMT") ? "2" : discipline.equals("TUM") ? "8" : "10");
 
             final Button zeroButton = popupLayout.findViewById(R.id.zeroButton2);
@@ -1112,10 +1113,20 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                 @Override
                 public void onClick(View v) {
                     popupWindow.dismiss();
-                    //mService.sendMessage("ElementsConfirmed," + elementsTextView.getText().toString());
-                    //TODO: SEND ELEMENTS
+                    popupWindowIsShowing = false;
+                    FormBody formBody = new FormBody.Builder()
+                            .add("Elements", elementsTextView.getText().toString())
+                            .build();
+                    String ipAddress = SP.getString("ipAddress", "10.0.0.11");
+                    String url = "http://"+ipAddress+":1337/confirmElements";
+
+                    NetworkUtils.performPostRequestWithRetry(url, formBody);
                 }
             });
+        }
+
+        public void closePopupWindow(){
+            popupWindow.dismiss();
         }
     }
 

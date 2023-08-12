@@ -1,7 +1,11 @@
 package com.nickledwold.scorebase_companion;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.preference.PreferenceManager;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,7 +20,10 @@ public class ContinuousHttpGet {
     private Handler handler;
     private final int INTERVAL = 1000; // 1 second interval
 
-    public ContinuousHttpGet(OnHttpResultListener listener) {
+    SharedPreferences sharedPreferences;
+
+    public ContinuousHttpGet(OnHttpResultListener listener, SharedPreferences SP) {
+        sharedPreferences = SP;
         this.resultListener = listener;
         handler = new Handler();
     }
@@ -47,9 +54,10 @@ public class ContinuousHttpGet {
 
             try {
                 System.out.println("Attempting API connection");
-
-                URL url = new URL("http://192.168.4.55:1337/competitionData");
+                String ipAddress = sharedPreferences.getString("ipAddress", "10.0.0.11");
+                URL url = new URL("http://"+ipAddress+":1337/competitionData");
                 connection = (HttpURLConnection) url.openConnection();
+                connection.setConnectTimeout(3 * 1000);
                 connection.setRequestMethod("GET");
 
                 int responseCode = connection.getResponseCode();
@@ -60,11 +68,11 @@ public class ContinuousHttpGet {
                         response.append(line);
                     }
                 } else {
-                    System.out.println("Unable to connect to API, response code: "+responseCode);
+                    resultListener.onHttpErrorOrException();
                 }
             } catch (Exception e) {
+                resultListener.onHttpErrorOrException();
                 e.printStackTrace();
-                System.out.println(e.toString());
             } finally {
                 if (reader != null) {
                     try {
@@ -100,5 +108,6 @@ public class ContinuousHttpGet {
 
     public interface OnHttpResultListener {
         void onHttpResult(String result);
+        void onHttpErrorOrException();
     }
 }
