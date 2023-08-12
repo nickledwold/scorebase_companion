@@ -167,6 +167,8 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             return;
         }
         ApiResponseObjects.CompetitionData competitionData = response.getResult();
+        if(competitionData == null) return;
+        if(competitionData.getPanelNumber() == null) return;
         if(!competitionData.getPanelNumber().toString().equals(panelNumber)) return;
         Boolean judgeNeedsReEntering = DoesJudgeNeedReEntering(competitionData.getJudgeInformation());
         if(!competitionData.getStatus().equals(Status) || (judgeNeedsReEntering && !reEntryInProgress)) {
@@ -195,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 ToggleInput(false);
                             }
 
-                            if(competitionData.getStatus().equals("COMPETING") || competitionData.getStatus().equals("AWAITING ELEMENTS") || competitionData.getStatus().equals("ELEMENTS CONFIRMED")) {
+                            if(competitionData.getStatus().equals("COMPETING") || competitionData.getStatus().equals("AWAITING ELEMENTS") || competitionData.getStatus().equals("ELEMENTS CONFIRMED") || competitionData.getStatus().equals("WAITING")) {
                                     ApiResponseObjects.CompetitorInformation competitorInfo = competitionData.getCompetitorInformation();
                                     nameTextView = findViewById(R.id.nameTextView);
                                     clubTextView = findViewById(R.id.clubTextView);
@@ -250,6 +252,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 }
                                 if (competitionData.getStatus().equals("WAITING") || competitionData.getStatus().equals("FLIGHT COMPLETE")) {
                                     scoreText.setText("");
+                                    scoreTextText.setVisibility(View.INVISIBLE);
                                     inputAllowed = false;
                                     ToggleInput(false);
                                     ShowCompetitorSummary(competitionData.getCompetitorInformation().getCompetitorSummary());
