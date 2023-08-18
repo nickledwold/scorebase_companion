@@ -6,6 +6,8 @@ import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -17,6 +19,7 @@ import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -28,17 +31,22 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.gcacace.signaturepad.views.SignaturePad;
 import com.jakewharton.processphoenix.ProcessPhoenix;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import android.util.Base64;
 import java.util.List;
 import java.util.Random;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 
 public class MainActivity extends AppCompatActivity implements ContinuousHttpGet.OnHttpResultListener {
 
@@ -91,7 +99,10 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
 
     public String Status = null;
 
-    private PopUpClass popUpClass;
+    private ElementsPopUpClass popUpClass;
+
+    private SignOffPopUpClass signOffPopUpClass;
+
 
     private Boolean reEntryInProgress = false;
 
@@ -100,7 +111,8 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         setTheme(R.style.splashScreenTheme);
         super.onCreate(savedInstanceState);
         mHandler = new Handler(Looper.getMainLooper());
-        popUpClass = new PopUpClass();
+        popUpClass = new ElementsPopUpClass();
+        signOffPopUpClass = new SignOffPopUpClass();
 
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -197,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 ToggleInput(false);
                             }
 
-                            if(competitionData.getStatus().equals("COMPETING") || competitionData.getStatus().equals("AWAITING ELEMENTS") || competitionData.getStatus().equals("ELEMENTS CONFIRMED") || competitionData.getStatus().equals("WAITING")) {
+                            if(competitionData.getStatus().equals("COMPETING") || competitionData.getStatus().equals("AWAITING ELEMENTS") || competitionData.getStatus().equals("ELEMENTS CONFIRMED") || competitionData.getStatus().equals("WAITING") || competitionData.getStatus().equals("FLIGHT COMPLETE")) {
                                     ApiResponseObjects.CompetitorInformation competitorInfo = competitionData.getCompetitorInformation();
                                     nameTextView = findViewById(R.id.nameTextView);
                                     clubTextView = findViewById(R.id.clubTextView);
@@ -252,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 }
                                 if (competitionData.getStatus().equals("WAITING") || competitionData.getStatus().equals("FLIGHT COMPLETE")) {
                                     scoreText.setText("");
-                                    scoreTextText.setVisibility(View.INVISIBLE);
+                                    scoreTextText.setVisibility(View.VISIBLE);
                                     inputAllowed = false;
                                     ToggleInput(false);
                                     ShowCompetitorSummary(competitionData.getCompetitorInformation().getCompetitorSummary());
@@ -265,6 +277,16 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 }
                             if (!competitionData.getStatus().equals("AWAITING ELEMENTS") && roleType.equals("CJP") && popUpClass != null && popUpClass.popupWindowIsShowing) {
                                 popUpClass.closePopupWindow();
+                            }
+
+                            if (competitionData.getStatus().equals("AWAITING SIGN OFF") && roleType.equals("CJP")) {
+                                if(signOffPopUpClass.popupWindowIsShowing) {
+                                    signOffPopUpClass.closePopupWindow();
+                                }
+                                signOffPopUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
+                            }
+                            if (!competitionData.getStatus().equals("AWAITING SIGN OFF") && roleType.equals("CJP") && signOffPopUpClass != null && signOffPopUpClass.popupWindowIsShowing) {
+                                signOffPopUpClass.closePopupWindow();
                             }
                             if(competitionData.getJudgeInformation().size() > 0) {
                                 for (ApiResponseObjects.JudgeInformation judgeInformation : competitionData.getJudgeInformation()) {
@@ -982,7 +1004,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         }
     }
 
-    public class PopUpClass{
+    public class ElementsPopUpClass {
 
         PopupWindow popupWindow = null;
         Boolean popupWindowIsShowing = false;
@@ -1126,6 +1148,57 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                     NetworkUtils.performPostRequestWithRetry(url, formBody);
                 }
             });
+        }
+
+        public void closePopupWindow(){
+            popupWindow.dismiss();
+        }
+    }
+
+    public class SignOffPopUpClass {
+
+        PopupWindow popupWindow = null;
+        Boolean popupWindowIsShowing = false;
+
+        public void showPopupWindow(final View view){
+
+            LayoutInflater inflater = getLayoutInflater();
+            final View popupLayout = inflater.inflate(R.layout.results_sign_off_layout, (ViewGroup)findViewById(R.id.results_sign_off_layout));
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            int width = displayMetrics.widthPixels;
+            popupWindow = new PopupWindow(popupLayout, width - 100,LinearLayout.LayoutParams.WRAP_CONTENT);
+            popupWindow.showAtLocation(view,Gravity.CENTER,0,0);
+            popupWindowIsShowing = true;
+
+            Button submitButton = popupLayout.findViewById(R.id.submitButton);
+            submitButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    popupWindow.dismiss();
+                    popupWindowIsShowing = false;
+                    SignaturePad signaturePad = popupLayout.findViewById(R.id.signature_pad);
+                    Bitmap signatureBitmap = signaturePad.getSignatureBitmap();
+                    sendSignature(signatureBitmap);
+                }
+            });
+        }
+
+        private void sendSignature(Bitmap signatureBitmap) {
+            // Convert the Bitmap to a byte array or other suitable format
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            signatureBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            byte[] signatureBytes = byteArrayOutputStream.toByteArray();
+            String base64String = Base64.encodeToString(signatureBytes, Base64.DEFAULT);
+
+            FormBody formBody = new FormBody.Builder()
+                    .add("SignatureBytesBase64", base64String)
+                    .build();
+            String ipAddress = SP.getString("ipAddress", "10.0.0.11");
+            String url = "http://"+ipAddress+":1337/resultsSignOff";
+
+            NetworkUtils.performPostRequestWithRetry(url, formBody);
+
         }
 
         public void closePopupWindow(){

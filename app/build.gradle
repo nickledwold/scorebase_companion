@@ -36,4 +36,5 @@ dependencies {
     implementation 'net.servicestack:client:1.0.49'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+    implementation 'com.github.gcacace:signature-pad:1.3.1'
 }

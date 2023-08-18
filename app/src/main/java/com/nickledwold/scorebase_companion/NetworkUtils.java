@@ -7,7 +7,7 @@ public class NetworkUtils {
 
     private static final int MAX_RETRY_ATTEMPTS = 3; // Number of retry attempts
 
-    public static void performPostRequestWithRetry(String url, FormBody formBody) {
+    public static void performPostRequestWithRetry(String url, RequestBody formBody) {
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder()
@@ -48,5 +48,7 @@ public class NetworkUtils {
             }
         });
     }
+
+    
 }
 
