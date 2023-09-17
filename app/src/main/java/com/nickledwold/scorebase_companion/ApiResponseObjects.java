@@ -21,6 +21,8 @@ public class ApiResponseObjects {
     public static class CompetitionData {
         private Integer PanelNumber;
         private String Status;
+        private String SignOffCategory;
+        private String SignOffRound;
         private CompetitorInformation CompetitorInformation;
         private List<JudgeInformation> JudgeInformation;
 
@@ -35,9 +37,23 @@ public class ApiResponseObjects {
         public String getStatus() {
             return Status;
         }
+        public String getSignOffCategory() {
+            return SignOffCategory;
+        }
+
+        public String getSignOffRound() {
+            return SignOffRound;
+        }
 
         public void setStatus(String status) {
             Status = status;
+        }
+        public void setSignOffCategory(String signOffCategory) {
+            SignOffCategory = signOffCategory;
+        }
+
+        public void setSignOffRound(String signOffRound) {
+            SignOffRound = signOffRound;
         }
 
         public CompetitorInformation getCompetitorInformation() {

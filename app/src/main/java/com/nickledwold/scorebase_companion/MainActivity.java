@@ -341,7 +341,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 if (signOffPopUpClass.popupWindowIsShowing) {
                                     signOffPopUpClass.closePopupWindow();
                                 }
-                                signOffPopUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
+                                signOffPopUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0), competitionData.getSignOffCategory(), competitionData.getSignOffRound());
                             }
                             if (!competitionData.getStatus().equals("AWAITING SIGN OFF") && roleType.equals("CJP") && signOffPopUpClass != null && signOffPopUpClass.popupWindowIsShowing) {
                                 signOffPopUpClass.closePopupWindow();
@@ -752,7 +752,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                 } else if (currentScoreInput == 2) {
                     score = score2Text.getText().toString();
                     if (roleType.equals("CJP")) {
-                        subRole = "H";
+                        subRole = "HD";
                     }
                     if (roleType.equals("D") && discipline.equals("TUM")) {
                         subRole = "B";
@@ -800,7 +800,6 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                     .add("Deductions", score)
                     .build();
             NetworkUtils.performPostRequestWithRetry(submitScoreUrl, formBody);
-            reEntryInProgress = false;
         }
 
         if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
@@ -821,6 +820,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                 submitButton.setTextColor(Color.WHITE);
                 currentScoreInput = 1;
                 ResetScoreInputOpacity();
+                reEntryInProgress = false;
             }
         } else if (roleType.equals("HDS") || roleType.equals("HDT")) {
             if (interimRoleType.equals("HD")) {
@@ -842,6 +842,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                 submitButton.setEnabled(true);
                 submitButton.setTextColor(Color.WHITE);
                 interimRoleType = "HD";
+                reEntryInProgress = false;
             }
         } else {
             inputAllowed = false;
@@ -852,6 +853,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             submitButton.setText("RE-ENTER");
             submitButton.setEnabled(true);
             submitButton.setTextColor(Color.WHITE);
+            reEntryInProgress = false;
         }
     }
 
@@ -952,8 +954,8 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 return;
                             }
                         } else if (currentScoreInput == 4) {
-                            if (value > 5) {
-                                ShowCustomToast(R.layout.custom_toast_red, (ViewGroup) findViewById(R.id.custom_toast_layout_red), "Please enter a value between 0 - 5", Toast.LENGTH_SHORT);
+                            if (value > 10) {
+                                ShowCustomToast(R.layout.custom_toast_red, (ViewGroup) findViewById(R.id.custom_toast_layout_red), "Please enter a value between 0 - 10", Toast.LENGTH_SHORT);
                                 return;
                             }
                         } else {
@@ -979,15 +981,19 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             String valueAfterDecimal = scoreTextValue.contains(".") ? scoreTextValue.substring(scoreTextValue.lastIndexOf('.') + 1) : null;
             switch (interimRoleType) {
                 case "CJP":
+                    if(currentScoreInput == 2 || currentScoreInput == 3){
+                        if (valueAfterDecimal != null && valueAfterDecimal.length() > 1) return;
+                    }else{
+                        if (valueAfterDecimal != null && valueAfterDecimal.length() > 0) return;
+                    }
+                    break;
                 case "D":
                     if (valueAfterDecimal != null && valueAfterDecimal.length() > 0) return;
                     break;
                 case "HD":
-                    if (valueAfterDecimal != null && valueAfterDecimal.length() > 1) return;
-                    break;
                 case "S":
                 case "T":
-                    if (valueAfterDecimal != null && valueAfterDecimal.length() > 2) return;
+                    if (valueAfterDecimal != null && valueAfterDecimal.length() > 1) return;
                     break;
             }
             switch (currentScoreInput) {
@@ -1476,7 +1482,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         PopupWindow popupWindow = null;
         Boolean popupWindowIsShowing = false;
 
-        public void showPopupWindow(final View view) {
+        public void showPopupWindow(final View view, String signOffCategory, String signOffRound) {
 
             LayoutInflater inflater = getLayoutInflater();
             final View popupLayout = inflater.inflate(R.layout.results_sign_off_layout, (ViewGroup) findViewById(R.id.results_sign_off_layout));
@@ -1495,12 +1501,12 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                     popupWindowIsShowing = false;
                     SignaturePad signaturePad = popupLayout.findViewById(R.id.signature_pad);
                     Bitmap signatureBitmap = signaturePad.getSignatureBitmap();
-                    sendSignature(signatureBitmap);
+                    sendSignature(signatureBitmap, signOffCategory, signOffRound);
                 }
             });
         }
 
-        private void sendSignature(Bitmap signatureBitmap) {
+        private void sendSignature(Bitmap signatureBitmap, String signOffCategory, String signOffRound) {
             // Convert the Bitmap to a byte array or other suitable format
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             signatureBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
@@ -1509,6 +1515,8 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
 
             FormBody formBody = new FormBody.Builder()
                     .add("SignatureBytesBase64", base64String)
+                    .add("SignOffCategory", signOffCategory)
+                    .add("SignOffRound", signOffRound)
                     .build();
             String ipAddress = SP.getString("ipAddress", "10.0.0.11");
             String url = "http://" + ipAddress + ":1337/resultsSignOff";
