@@ -1502,6 +1502,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                     SignaturePad signaturePad = popupLayout.findViewById(R.id.signature_pad);
                     Bitmap signatureBitmap = signaturePad.getSignatureBitmap();
                     sendSignature(signatureBitmap, signOffCategory, signOffRound);
+                    ShowCustomToast(R.layout.custom_toast_green, (ViewGroup) findViewById(R.id.custom_toast_layout_green), "Round signed off", Toast.LENGTH_SHORT);
                 }
             });
         }
