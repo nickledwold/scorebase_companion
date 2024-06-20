@@ -36,11 +36,11 @@
         android:layout_marginTop="5dp"
         android:layout_marginBottom="25dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintBottom_toTopOf="@+id/roleInfoPanel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/infoPanelImageView"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/scorebaseImageView"

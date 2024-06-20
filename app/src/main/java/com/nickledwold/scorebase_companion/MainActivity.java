@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -21,7 +20,6 @@ import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -49,17 +47,17 @@ import java.util.Random;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import okhttp3.FormBody;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
 
 public class MainActivity extends AppCompatActivity implements ContinuousHttpGet.OnHttpResultListener {
 
     private TextView deductionOneTextView;
     private TextView nameTextView;
+    private TextView surnameTextView;
     private TextView clubTextView;
     private TextView categoryTextView;
     private TextView otherInfoTextView;
+    private TextView numberTextView;
+    private TextView flightTextView;
     private TextView deductionTwoTextView;
     private TextView deductionThreeTextView;
     private TextView deductionFourTextView;
@@ -116,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
     private ContinuousHttpGet continuousHttpGet;
 
     public String Status = null;
+    public int CurrentElements = 0;
 
     private ElementsPopUpClass popUpClass;
 
@@ -200,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         if (competitionData.getPanelNumber() == null) return;
         if (!competitionData.getPanelNumber().toString().equals(panelNumber)) return;
         Boolean judgeNeedsReEntering = DoesJudgeNeedReEntering(competitionData.getJudgeInformation());
-        if (!competitionData.getStatus().equals(Status) || (judgeNeedsReEntering && !reEntryInProgress)) {
+        if (!competitionData.getStatus().equals(Status) || (judgeNeedsReEntering && !reEntryInProgress) || (CurrentElements != competitionData.getCompetitorInformation().getElements())) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -211,9 +210,12 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                             onTouchEvent(null);
                             if (competitionData.getStatus().equals("")) {
                                 nameTextView = findViewById(R.id.nameTextView);
+                                surnameTextView = findViewById(R.id.surnameTextView);
                                 clubTextView = findViewById(R.id.clubTextView);
                                 categoryTextView = findViewById(R.id.categoryTextView);
                                 otherInfoTextView = findViewById(R.id.otherInfoTextView);
+                                numberTextView = findViewById(R.id.numberTextView);
+                                flightTextView = findViewById(R.id.flightTextView);
                                 scoreTextText.setVisibility(View.VISIBLE);
                                 if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
                                     score2TextText.setVisibility(View.VISIBLE);
@@ -226,6 +228,9 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 clubTextView.setText("");
                                 categoryTextView.setText("");
                                 otherInfoTextView.setText("");
+                                flightTextView.setText("");
+                                surnameTextView.setText("");
+                                numberTextView.setText("");
                                 ClearScores(true);
                                 HideCompetitorSummary();
                                 ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
@@ -236,9 +241,12 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                             if (competitionData.getStatus().equals("COMPETING") || competitionData.getStatus().equals("AWAITING ELEMENTS") || competitionData.getStatus().equals("ELEMENTS CONFIRMED") || competitionData.getStatus().equals("WAITING") || competitionData.getStatus().equals("FLIGHT COMPLETE")) {
                                 ApiResponseObjects.CompetitorInformation competitorInfo = competitionData.getCompetitorInformation();
                                 nameTextView = findViewById(R.id.nameTextView);
+                                surnameTextView = findViewById(R.id.surnameTextView);
                                 clubTextView = findViewById(R.id.clubTextView);
                                 categoryTextView = findViewById(R.id.categoryTextView);
                                 otherInfoTextView = findViewById(R.id.otherInfoTextView);
+                                flightTextView = findViewById(R.id.flightTextView);
+                                numberTextView = findViewById(R.id.numberTextView);
                                 scoreTextText.setVisibility(View.VISIBLE);
                                 if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
                                     score2TextText.setVisibility(View.VISIBLE);
@@ -247,11 +255,13 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                         score4TextText.setVisibility(View.VISIBLE);
                                     }
                                 }
-                                nameTextView.setText(competitorInfo.getName());
+                                nameTextView.setText(competitorInfo.getFirstName());
+                                surnameTextView.setText(competitorInfo.getSurname());
                                 clubTextView.setText(competitorInfo.getClub());
                                 categoryTextView.setText(competitorInfo.getCategory());
-                                String otherInfo = "Exercise " + competitorInfo.getExercise() + " | Flight " + competitorInfo.getFlight() + " |  No " + competitorInfo.getCompetitorNumber() + "/" + competitorInfo.getCompetitorCount();
-                                otherInfoTextView.setText(otherInfo);
+                                otherInfoTextView.setText("Exercise " + competitorInfo.getExercise());
+                                flightTextView.setText("Flight " + competitorInfo.getFlight());
+                                numberTextView.setText("No " + competitorInfo.getCompetitorNumber() + "/" + competitorInfo.getCompetitorCount());
                                 ClearScores(true);
                                 HideCompetitorSummary();
                                 ReduceOpacityOfDeductionBoxes(interfaceType.equals("DMTDeduction") ? 2 : interfaceType.equals("TUMDeduction") ? 8 : 10);
@@ -363,6 +373,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             });
         }
         Status = competitionData.getStatus();
+        CurrentElements = competitionData.getCompetitorInformation().getElements();
     }
 
     private void UpdateScoreInputOpacity() {
@@ -583,12 +594,12 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             }
         }
         for (int i = 0; i < deductionsArray.length; i++) {
-            imageViews.get(i).setImageDrawable(getDrawable(R.drawable.bluepanel));
+            imageViews.get(i).setImageDrawable(getDrawable(R.drawable.bluepanel_deduction));
         }
         int firstEmpty = find(deductionsArray, -1);
         if (firstEmpty == -1) return;
         if (!fullExercise && firstEmpty >= elements) return;
-        imageViews.get(firstEmpty).setImageDrawable(getDrawable(R.drawable.bluepanel_lighter));
+        imageViews.get(firstEmpty).setImageDrawable(getDrawable(R.drawable.bluepanel_lighter_deduction));
     }
 
     private void ReduceOpacityOfDeductionBoxes(int elementsInExercise) {

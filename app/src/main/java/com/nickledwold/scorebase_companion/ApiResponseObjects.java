@@ -57,7 +57,7 @@ public class ApiResponseObjects {
         }
 
         public CompetitorInformation getCompetitorInformation() {
-            return CompetitorInformation;
+            return (CompetitorInformation != null) ? CompetitorInformation : new CompetitorInformation();
         }
 
         public void setCompetitorInformation(CompetitorInformation competitorInformation) {
@@ -133,9 +133,34 @@ public class ApiResponseObjects {
         public void setCompetitorId(int competitorId) {
             CompetitorId = competitorId;
         }
+        public static String getNameUpToFirstSpace(String str) {
+            if (str == null || str.isEmpty()) {
+                return ""; // or handle as needed
+            }
+            int spaceIndex = str.indexOf(' ');
+            if (spaceIndex != -1) {
+                return str.substring(0, spaceIndex);
+            } else {
+                return str; // No space found, return the entire string
+            }
+        }
 
-        public String getName() {
-            return Name;
+        public static String getNameAfterFirstSpace(String str) {
+            if (str == null || str.isEmpty()) {
+                return ""; // or handle as needed
+            }
+            int spaceIndex = str.indexOf(' ');
+            if (spaceIndex != -1) {
+                return str.substring(spaceIndex + 1);
+            } else {
+                return ""; // No space found, return an empty string
+            }
+        }
+        public String getFirstName() {
+            return (Name != null) ? getNameAfterFirstSpace(Name) : "";
+        }
+        public String getSurname() {
+            return (Name != null) ? getNameUpToFirstSpace(Name) : "";
         }
 
         public void setName(String name) {
@@ -143,7 +168,7 @@ public class ApiResponseObjects {
         }
 
         public String getClub() {
-            return Club;
+            return (Club != null) ? Club : "";
         }
 
         public void setClub(String club) {
@@ -151,7 +176,7 @@ public class ApiResponseObjects {
         }
 
         public String getCategory() {
-            return Category;
+            return (Category != null) ? Category : "";
         }
 
         public void setCategory(String category) {

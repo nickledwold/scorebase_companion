@@ -34,11 +34,11 @@
         android:layout_marginTop="20dp"
         android:layout_marginBottom="20dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintBottom_toTopOf="@+id/roleInfoPanel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/infoPanelImageView"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/deuctionOnePanelImageView"
@@ -47,10 +47,10 @@
         android:layout_marginTop="40dp"
         android:layout_marginEnd="5dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintEnd_toStartOf="@+id/deductionTwoTextView"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/deuctionTwoPanelImageView"
@@ -60,11 +60,11 @@
         android:layout_marginTop="40dp"
         android:layout_marginEnd="5dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintEnd_toStartOf="@+id/deuctionStabilityPanelImageView"
         app:layout_constraintStart_toEndOf="@+id/deductionOneTextView"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/deuctionStabilityPanelImageView"
@@ -73,10 +73,10 @@
         android:layout_marginTop="40dp"
         android:layout_marginEnd="110dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/scorebaseImageView"

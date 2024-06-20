@@ -33,10 +33,10 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="15dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/infoPanelImageView"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/scorePanelImageView2"
@@ -45,10 +45,10 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="15dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintStart_toEndOf="@+id/scorePanelImageView"
         app:layout_constraintTop_toBottomOf="@+id/infoPanelImageView"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/scorePanelImageView3"
@@ -57,10 +57,10 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="10dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/scorePanelImageView"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/scorePanelImageView4"
@@ -69,10 +69,10 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="10dp"
         android:background="@android:color/transparent"
-        app:background="@drawable/bluepanel"
+        app:background="@drawable/bluepanel_deduction"
         app:layout_constraintStart_toEndOf="@+id/scorePanelImageView3"
         app:layout_constraintTop_toBottomOf="@+id/scorePanelImageView2"
-        app:srcCompat="@drawable/bluepanel" />
+        app:srcCompat="@drawable/bluepanel_deduction" />
 
     <ImageView
         android:id="@+id/scorebaseImageView"
