@@ -84,6 +84,36 @@ public class ApiResponseObjects {
             return JudgeName;
         }
 
+        public static String getNameUpToFirstSpace(String str) {
+            if (str == null || str.isEmpty()) {
+                return ""; // or handle as needed
+            }
+            int spaceIndex = str.indexOf(' ');
+            if (spaceIndex != -1) {
+                return str.substring(0, spaceIndex);
+            } else {
+                return str; // No space found, return the entire string
+            }
+        }
+
+        public static String getNameAfterFirstSpace(String str) {
+            if (str == null || str.isEmpty()) {
+                return ""; // or handle as needed
+            }
+            int spaceIndex = str.indexOf(' ');
+            if (spaceIndex != -1) {
+                return str.substring(spaceIndex + 1);
+            } else {
+                return ""; // No space found, return an empty string
+            }
+        }
+        public String getJudgeFirstname() {
+            return (JudgeName != null) ? getNameAfterFirstSpace(JudgeName) : "";
+        }
+        public String getJudgeSurname() {
+            return (JudgeName != null) ? getNameUpToFirstSpace(JudgeName) : "";
+        }
+
         public void setJudgeName(String judgeName) {
             JudgeName = judgeName;
         }

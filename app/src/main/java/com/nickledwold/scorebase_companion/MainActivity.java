@@ -69,7 +69,10 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
     private TextView deductionTenTextView;
     private TextView deductionStabilityTextView;
     private TextView panelAndRoleTextView;
+    private TextView roleTextView;
+    private TextView disciplineTextView;
     private TextView judgeNameTextView;
+    private TextView judgeSurnameTextView;
     private Button submitButton;
     private TextView scoreText;
     private TextView scoreTextText;
@@ -258,9 +261,9 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 nameTextView.setText(competitorInfo.getFirstName());
                                 surnameTextView.setText(competitorInfo.getSurname());
                                 clubTextView.setText(competitorInfo.getClub());
-                                categoryTextView.setText(competitorInfo.getCategory());
+                                categoryTextView.setText(competitorInfo.getCategory().toUpperCase());
                                 otherInfoTextView.setText("Exercise " + competitorInfo.getExercise());
-                                flightTextView.setText("Flight " + competitorInfo.getFlight());
+                                flightTextView.setText(("Flight " + competitorInfo.getFlight()).toUpperCase());
                                 numberTextView.setText("No " + competitorInfo.getCompetitorNumber() + "/" + competitorInfo.getCompetitorCount());
                                 ClearScores(true);
                                 HideCompetitorSummary();
@@ -360,9 +363,12 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 for (ApiResponseObjects.JudgeInformation judgeInformation : competitionData.getJudgeInformation()) {
                                     if (judgeInformation.getJudgeRole().equals(roleType) || (roleType.equals("HDT") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("T"))) || (roleType.equals("HDS") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("S")))) {
                                         judgeNameTextView = findViewById(R.id.judgeNameTextView);
-                                        judgeNameTextView.setText(judgeInformation.getJudgeName());
+                                        judgeSurnameTextView = findViewById(R.id.judgeSurnameTextView);
+                                        judgeNameTextView.setText(judgeInformation.getJudgeFirstname());
+                                        judgeSurnameTextView.setText(judgeInformation.getJudgeSurname());
                                         SharedPreferences.Editor editor = SP.edit();
-                                        editor.putString("judgeName", judgeInformation.getJudgeName());
+                                        editor.putString("judgeName", judgeInformation.getJudgeFirstname());
+                                        editor.putString("judgeSurname", judgeInformation.getJudgeSurname());
                                         editor.commit();
                                     }
                                 }
@@ -513,13 +519,13 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
 
     private void HideCompetitorSummary() {
         if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
-            scoreTextText.setText("Elements");
+            scoreTextText.setText("ELEMENTS");
             score2TextText.setText("H");
             score3TextText.setText(discipline.equals("TRS") ? "S" : "T");
-            score4TextText.setText("Penalty");
+            score4TextText.setText("PENALTY");
         } else if (roleType.equals("D") && discipline.equals("TUM")) {
             scoreTextText.setText("D");
-            score2TextText.setText("Bonus");
+            score2TextText.setText("BONUS");
         } else if (roleType.equals("CJP")) {
             scoreTextText.setText("PENALTY");
         } else if (roleType.startsWith("E")) {
@@ -1244,7 +1250,10 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         deductionTenTextView = findViewById(R.id.deductionTenTextView);
         deductionStabilityTextView = findViewById(R.id.deductionStabilityTextView);
         panelAndRoleTextView = findViewById(R.id.panelAndRoleTextView);
+        roleTextView = findViewById(R.id.roleTextView);
+        disciplineTextView = findViewById(R.id.disciplineTextView);
         judgeNameTextView = findViewById(R.id.judgeNameTextView);
+        judgeSurnameTextView = findViewById(R.id.judgeSurnameTextView);
         scoreText = (TextView) findViewById(R.id.scoreTextView);
         scoreTextText = (TextView) findViewById(R.id.scoreTextTextView);
         scorePanelImageView = (ImageView) findViewById(R.id.scorePanelImageView);
@@ -1257,8 +1266,11 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         score3TextText = (TextView) findViewById(R.id.score3TextTextView);
         score4Text = (TextView) findViewById(R.id.score4TextView);
         score4TextText = (TextView) findViewById(R.id.score4TextTextView);
-        panelAndRoleTextView.setText("P" + panelNumber + " | " + roleType);
-        judgeNameTextView.setText(SP.getString("judgeName", "SURNAME FirstName"));
+        roleTextView.setText(roleType);
+        panelAndRoleTextView.setText("PANEL " + panelNumber);
+        disciplineTextView.setText(discipline + " | ");
+        judgeNameTextView.setText(SP.getString("judgeName", "FirstName"));
+        judgeSurnameTextView.setText(SP.getString("judgeSurname", "SURNAME"));
 
         if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
             scoreTextText.setText("Elements");
