@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 34
     defaultConfig {
         applicationId "com.nickledwold.scorebase_companion"
         minSdkVersion 22
-        targetSdkVersion 31
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -25,19 +25,36 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:core:1.4.0'
-    androidTestImplementation 'androidx.test:runner:1.4.0'
-    androidTestImplementation 'androidx.test:rules:1.4.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'com.google.code.gson:gson:2.3.1'
-    implementation 'com.jakewharton:process-phoenix:2.1.2'
-    implementation 'net.servicestack:client:1.0.49'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
-    implementation 'com.github.gcacace:signature-pad:1.3.1'
+
+    // Core AndroidX
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "androidx.core:core-ktx:1.13.1"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+    implementation "androidx.cardview:cardview:1.0.0" // still current
+
+    // Google Material Components (for modern widgets, theming, fonts)
+    implementation "com.google.android.material:material:1.12.0"
+
+    // JSON + Networking
+    implementation "com.google.code.gson:gson:2.11.0"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.17.2"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+
+    // Other libraries
+    implementation "com.jakewharton:process-phoenix:2.1.2" // latest is still 2.1.2
+    implementation "com.github.gcacace:signature-pad:1.3.1" // latest
+
+    // ServiceStack client (leave as-is if you need that version)
+    implementation "net.servicestack:client:1.0.49"
+
+    // Unit testing
+    testImplementation "junit:junit:4.13.2"
+
+    // AndroidX testing
+    androidTestImplementation "androidx.test:core:1.6.1"
+    androidTestImplementation "androidx.test:runner:1.6.1"
+    androidTestImplementation "androidx.test:rules:1.6.1"
+    androidTestImplementation "androidx.test.ext:junit:1.2.1"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"
 }
+
