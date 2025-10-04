@@ -220,9 +220,9 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 numberTextView = findViewById(R.id.numberTextView);
                                 flightTextView = findViewById(R.id.flightTextView);
                                 scoreTextText.setVisibility(View.VISIBLE);
-                                if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
+                                if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
                                     score2TextText.setVisibility(View.VISIBLE);
-                                    if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+                                    if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                                         score3TextText.setVisibility(View.VISIBLE);
                                         score4TextText.setVisibility(View.VISIBLE);
                                     }
@@ -250,10 +250,11 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 otherInfoTextView = findViewById(R.id.otherInfoTextView);
                                 flightTextView = findViewById(R.id.flightTextView);
                                 numberTextView = findViewById(R.id.numberTextView);
+                                scoreTextText.setText("HELLO");
                                 scoreTextText.setVisibility(View.VISIBLE);
-                                if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
+                                if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
                                     score2TextText.setVisibility(View.VISIBLE);
-                                    if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+                                    if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                                         score3TextText.setVisibility(View.VISIBLE);
                                         score4TextText.setVisibility(View.VISIBLE);
                                     }
@@ -277,13 +278,13 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 ReduceOpacityOfDeductionBoxes(elements);
                                 inputAllowed = true;
                                 if (elements > 0) {
-                                    if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+                                    if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                                         scoreText.setText(String.valueOf(elements));
                                         currentScoreInput = 2;
                                         UpdateScoreInputOpacity();
                                     }
                                     ToggleInput(true);
-                                    if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+                                    if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                                         currentScoreInput = 2;
                                     } else {
                                         currentScoreInput = 1;
@@ -305,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 inputAllowed = true;
                                 reEntryInProgress = true;
                                 ToggleInput(true);
-                                if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+                                if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                                     currentScoreInput = 2;
                                     scoreText.setText(String.valueOf(elements));
                                 } else {
@@ -329,9 +330,9 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                             if (competitionData.getStatus().equals("WAITING") || competitionData.getStatus().equals("FLIGHT COMPLETE")) {
                                 scoreText.setText("");
                                 scoreTextText.setVisibility(View.VISIBLE);
-                                if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
+                                if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
                                     score2TextText.setVisibility(View.VISIBLE);
-                                    if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+                                    if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                                         score3TextText.setVisibility(View.VISIBLE);
                                         score4TextText.setVisibility(View.VISIBLE);
                                     }
@@ -340,23 +341,23 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                                 ToggleInput(false);
                                 ShowCompetitorSummary(competitionData.getCompetitorInformation().getCompetitorSummary());
                             }
-                            if (competitionData.getStatus().equals("AWAITING ELEMENTS") && roleType.equals("CJP")) {
+                            if (competitionData.getStatus().equals("AWAITING ELEMENTS") && (roleType.equals("CJP - HDTS") || roleType.equals("CJP"))) {
                                 if (popUpClass.popupWindowIsShowing) {
                                     popUpClass.closePopupWindow();
                                 }
                                 popUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0));
                             }
-                            if (!competitionData.getStatus().equals("AWAITING ELEMENTS") && roleType.equals("CJP") && popUpClass != null && popUpClass.popupWindowIsShowing) {
+                            if (!competitionData.getStatus().equals("AWAITING ELEMENTS") && (roleType.equals("CJP - HDTS") || roleType.equals("CJP")) && popUpClass != null && popUpClass.popupWindowIsShowing) {
                                 popUpClass.closePopupWindow();
                             }
 
-                            if (competitionData.getStatus().equals("AWAITING SIGN OFF") && roleType.equals("CJP")) {
+                            if (competitionData.getStatus().equals("AWAITING SIGN OFF") && (roleType.equals("CJP - HDTS") || roleType.equals("CJP"))) {
                                 if (signOffPopUpClass.popupWindowIsShowing) {
                                     signOffPopUpClass.closePopupWindow();
                                 }
                                 signOffPopUpClass.showPopupWindow((ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0), competitionData.getSignOffCategory(), competitionData.getSignOffRound());
                             }
-                            if (!competitionData.getStatus().equals("AWAITING SIGN OFF") && roleType.equals("CJP") && signOffPopUpClass != null && signOffPopUpClass.popupWindowIsShowing) {
+                            if (!competitionData.getStatus().equals("AWAITING SIGN OFF") && (roleType.equals("CJP - HDTS") || roleType.equals("CJP")) && signOffPopUpClass != null && signOffPopUpClass.popupWindowIsShowing) {
                                 signOffPopUpClass.closePopupWindow();
                             }
                             if (competitionData.getJudgeInformation().size() > 0) {
@@ -389,11 +390,11 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         List<TextView> textViews = new ArrayList<>();
         textViews.add((TextView) findViewById(R.id.scoreTextView));
         textViews.add((TextView) findViewById(R.id.scoreTextTextView));
-        if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || roleType.equals("D") && discipline.equals("TUM")) {
+        if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || roleType.equals("D") && discipline.equals("TUM")) {
             imageViews.add((ImageView) findViewById(R.id.scorePanelImageView2));
             textViews.add((TextView) findViewById(R.id.score2TextView));
             textViews.add((TextView) findViewById(R.id.score2TextTextView));
-            if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+            if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                 imageViews.add((ImageView) findViewById(R.id.scorePanelImageView3));
                 textViews.add((TextView) findViewById(R.id.score3TextView));
                 textViews.add((TextView) findViewById(R.id.score3TextTextView));
@@ -432,11 +433,11 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         List<TextView> textViews = new ArrayList<>();
         textViews.add((TextView) findViewById(R.id.scoreTextView));
         textViews.add((TextView) findViewById(R.id.scoreTextTextView));
-        if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || roleType.equals("D") && discipline.equals("TUM")) {
+        if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || roleType.equals("D") && discipline.equals("TUM")) {
             imageViews.add((ImageView) findViewById(R.id.scorePanelImageView2));
             textViews.add((TextView) findViewById(R.id.score2TextView));
             textViews.add((TextView) findViewById(R.id.score2TextTextView));
-            if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+            if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                 imageViews.add((ImageView) findViewById(R.id.scorePanelImageView3));
                 textViews.add((TextView) findViewById(R.id.score3TextView));
                 textViews.add((TextView) findViewById(R.id.score3TextTextView));
@@ -460,7 +461,11 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
     private Boolean DoesJudgeNeedReEntering(List<ApiResponseObjects.JudgeInformation> judgeInformationList) {
         List<ApiResponseObjects.JudgeInformation> trimmedJudgeInformationList = new ArrayList<>();
         for (ApiResponseObjects.JudgeInformation judgeInformation : judgeInformationList) {
-            if ((judgeInformation.getJudgeRole().equals(roleType) || (roleType.equals("HDT") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("T"))) || (roleType.equals("HDS") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("S")))) && judgeInformation.isReEntryRequested()) {
+            if ((judgeInformation.getJudgeRole().equals(roleType)
+                    || (roleType.equals("HDT") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("T")))
+                    || (roleType.equals("HDS") && (judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("S")))
+                    || (roleType.equals("CJP - HDTS") && (judgeInformation.getJudgeRole().equals("CJP") || judgeInformation.getJudgeRole().equals("HD") || judgeInformation.getJudgeRole().equals("T") || judgeInformation.getJudgeRole().equals("S"))))
+                && judgeInformation.isReEntryRequested()) {
                 return true;
             }
         }
@@ -472,13 +477,13 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         scoreTextText.setVisibility(View.INVISIBLE);
         scoreText.requestLayout();
 
-        if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
+        if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
             score2Text.setText("");
             score2TextText.setVisibility(View.INVISIBLE);
             score2Text.requestLayout();
 
 
-            if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+            if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                 score3Text.setText("");
                 score4Text.setText("");
                 score3TextText.setVisibility(View.INVISIBLE);
@@ -518,7 +523,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
 
 
     private void HideCompetitorSummary() {
-        if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+        if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
             scoreTextText.setText("ELEMENTS");
             score2TextText.setText("H");
             score3TextText.setText(discipline.equals("TRS") ? "S" : "T");
@@ -569,9 +574,9 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         }
         if (clearScoreText) {
             scoreText.setText("");
-            if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
+            if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
                 score2Text.setText("");
-                if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+                if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                     score3Text.setText("");
                     score4Text.setText("");
                 }
@@ -768,7 +773,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                             .build();
                 } else if (currentScoreInput == 2) {
                     score = score2Text.getText().toString();
-                    if (roleType.equals("CJP")) {
+                    if (roleType.equals("CJP - HDTS")) {
                         subRole = "HD";
                     }
                     if (roleType.equals("D") && discipline.equals("TUM")) {
@@ -781,7 +786,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                             .build();
                 } else if (currentScoreInput == 3) {
                     score = score3Text.getText().toString();
-                    if (roleType.equals("CJP")) {
+                    if (roleType.equals("CJP - HDTS")) {
                         subRole = discipline.equals("TRS") ? "S" : "T";
                     }
                     formBody = new FormBody.Builder()
@@ -819,11 +824,11 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             NetworkUtils.performPostRequestWithRetry(submitScoreUrl, formBody);
         }
 
-        if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
+        if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
             if (currentScoreInput == 1) {
                 currentScoreInput++;
                 UpdateScoreInputOpacity();
-            } else if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) && currentScoreInput > 1 && currentScoreInput < 4) {
+            } else if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) && currentScoreInput > 1 && currentScoreInput < 4) {
                 currentScoreInput++;
                 UpdateScoreInputOpacity();
             } else {
@@ -878,9 +883,9 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         int textColor = enabled ? Color.WHITE : Color.GRAY;
         int imageAlpha = enabled ? 255 : 100;
         scoreText.setTextColor(textColor);
-        if ((roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
+        if ((roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) || (roleType.equals("D") && discipline.equals("TUM"))) {
             score2Text.setTextColor(textColor);
-            if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+            if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
                 score3Text.setTextColor(textColor);
                 score4Text.setTextColor(textColor);
             }
@@ -963,7 +968,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             float value = buttonValue.equals(".") ? Float.parseFloat(scoreTextValue) : Float.parseFloat(scoreTextValue + buttonValue);
             switch (interimRoleType) {
                 case "HD":
-                case "CJP":
+                case "CJP - HDTS":
                     if (discipline.equals("TRA") || discipline.equals("TRS")) {
                         if (currentScoreInput == 3) {
                             if (value > 20) {
@@ -986,6 +991,11 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
                         return;
                     }
                     break;
+                case "CJP":
+                    if (value > 10) {
+                        ShowCustomToast(R.layout.custom_toast_red, (ViewGroup) findViewById(R.id.custom_toast_layout_red), "Please enter a value between 0 - 10", Toast.LENGTH_SHORT);
+                        return;
+                    }
                 case "S":
                 case "T":
                 case "D":
@@ -997,12 +1007,15 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
             }
             String valueAfterDecimal = scoreTextValue.contains(".") ? scoreTextValue.substring(scoreTextValue.lastIndexOf('.') + 1) : null;
             switch (interimRoleType) {
-                case "CJP":
+                case "CJP - HDTS":
                     if(currentScoreInput == 2 || currentScoreInput == 3){
                         if (valueAfterDecimal != null && valueAfterDecimal.length() > 1) return;
                     }else{
                         if (valueAfterDecimal != null && valueAfterDecimal.length() > 0) return;
                     }
+                    break;
+                case "CJP":
+                    if (valueAfterDecimal != null && valueAfterDecimal.length() > 0) return;
                     break;
                 case "D":
                     if (valueAfterDecimal != null && valueAfterDecimal.length() > 0) return;
@@ -1219,7 +1232,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         }
 
 
-        if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+        if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
             interfaceType = "FullScore";
             setContentView(R.layout.activity_main_four_score);
         } else if (roleType.equals("D") && discipline.equals("TUM")) {
@@ -1272,7 +1285,7 @@ public class MainActivity extends AppCompatActivity implements ContinuousHttpGet
         judgeNameTextView.setText(SP.getString("judgeName", "FirstName"));
         judgeSurnameTextView.setText(SP.getString("judgeSurname", "SURNAME"));
 
-        if (roleType.equals("CJP") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
+        if (roleType.equals("CJP - HDTS") && (discipline.equals("TRA") || discipline.equals("TRS"))) {
             scoreTextText.setText("Elements");
             score2TextText.setText("H");
             if (discipline.equals("TRA")) {

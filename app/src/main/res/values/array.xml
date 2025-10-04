@@ -56,6 +56,7 @@
         <item>T</item>
         <item>S</item>
         <item>CJP</item>
+        <item>CJP - HDTS</item>
     </string-array>
 
     <string-array name="rolesListValues">
@@ -72,6 +73,7 @@
         <item>T</item>
         <item>S</item>
         <item>CJP</item>
+        <item>CJP - HDTS</item>
     </string-array>
 
     <string-array name="ipAddressAssignModeListArray">
